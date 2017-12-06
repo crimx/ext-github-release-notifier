@@ -1,2 +1,3 @@
-# crx-github-release-notifier
+# ext-github-release-notifier
 Release notifier for Github
+

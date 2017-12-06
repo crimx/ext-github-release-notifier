@@ -1,0 +1,10 @@
+{
+  "minimum_chrome_version": "55",
+
+  "background": {
+    "scripts": [
+      "background.js"
+    ],
+    "persistent": false
+  }
+}

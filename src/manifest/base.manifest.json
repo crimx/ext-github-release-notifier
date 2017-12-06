@@ -1,0 +1,35 @@
+{
+  "manifest_version": 2,
+
+  "name": "Github Release Notifier",
+  "short_name": "Release Notifier",
+  "description": "Release Notifier for Github",
+
+  "version": "0.0.0",
+
+  "icons": {
+    "16": "assets/icon-16.png",
+    "32": "assets/icon-32.png",
+    "48": "assets/icon-48.png",
+    "128": "assets/icon-128.png"
+  },
+
+  "browser_action": {
+    "default_icon": {
+      "16": "assets/icon-16.png",
+      "32": "assets/icon-32.png",
+      "64": "assets/icon-64.png"
+    },
+    "default_popup": "popup.html",
+    "default_title": "Everything is up to date."
+  },
+
+  "permissions": [
+    "https://*.github.com/*",
+    "identity",
+    "storage",
+    "notifications"
+  ],
+
+  "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'"
+}
