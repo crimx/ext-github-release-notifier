@@ -5,5 +5,5 @@
     }],
     "stage-2"
   ],
-  "plugins": ["transform-runtime"]
+  "plugins": ["transform-runtime", "lodash"]
 }

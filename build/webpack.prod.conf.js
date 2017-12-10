@@ -6,9 +6,9 @@ const config = require('../config')
 const merge = require('webpack-merge')
 const baseWebpackConfig = require('./webpack.base.conf')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
-const HtmlWebpackPlugin = require('html-webpack-plugin')
 const ExtractTextPlugin = require('extract-text-webpack-plugin')
 const OptimizeCSSPlugin = require('optimize-css-assets-webpack-plugin')
+const LodashModuleReplacementPlugin = require('lodash-webpack-plugin')
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
 const GenerateJsonPlugin = require('generate-json-webpack-plugin')
 const manifest = require('../src/manifest/base.manifest.json')
@@ -42,6 +42,9 @@ const webpackConfig = merge(baseWebpackConfig, {
     new webpack.DefinePlugin({
       'process.env': env
     }),
+    // tailor moment locales
+    new webpack.ContextReplacementPlugin(/moment[\\/]locale$/, /^\.\/en$/),
+    new LodashModuleReplacementPlugin(),
     new UglifyJsPlugin({
       uglifyOptions: {
         ie8: false,
