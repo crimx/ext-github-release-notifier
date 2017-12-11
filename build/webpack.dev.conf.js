@@ -13,7 +13,8 @@ const PORT = process.env.PORT && Number(process.env.PORT)
 
 const devWebpackConfig = merge(baseWebpackConfig, {
   entry: {
-    popup: './src/popup/main.js'
+    popup: './src/popup/main.js',
+    fake: './test/dev.fake.js'
   },
   module: {
     rules: utils.styleLoaders({ sourceMap: config.dev.cssSourceMap, usePostCSS: true })
@@ -44,11 +45,6 @@ const devWebpackConfig = merge(baseWebpackConfig, {
     new webpack.DefinePlugin({
       'process.env': require('../config/dev.env')
     }),
-    // mock extension api
-    new webpack.NormalModuleReplacementPlugin(
-      /src\/api\.js/,
-      '../test/api.mock.js'
-    ),
     // tailor locales
     new webpack.ContextReplacementPlugin(/moment[\\/]locale$/, /^\.\/en$/),
     new webpack.HotModuleReplacementPlugin(),
@@ -58,6 +54,7 @@ const devWebpackConfig = merge(baseWebpackConfig, {
     new HtmlWebpackPlugin({
       filename: 'index.html',
       template: 'index.html',
+      chunks: ['fake', 'popup'],
       inject: true
     }),
   ]
