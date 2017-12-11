@@ -1,6 +1,7 @@
 /**
- * @file A smaller set of file type info taken from vscode-icons, for identifying icon files.
+ * A smaller set of file type info taken from vscode-icons, for identifying icon files.
  * Added .crx and .xpi support.
+ * @module FileTypeIcons
  * @see {@link https://github.com/vscode-icons/vscode-icons}
  */
 

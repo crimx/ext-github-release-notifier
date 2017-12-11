@@ -1,5 +1,6 @@
 /**
- * @file api for repos
+ * api for repos
+ * @module API
  */
 
 import browser from 'webextension-polyfill'
@@ -8,7 +9,7 @@ import _ from 'lodash'
 /**
  * Release data, for generating Map
  * @see {@link https://developer.github.com/v3/repos/releases/}
- * @typedef ReleaseData
+ * @typedef {object} ReleaseData
  * @property {string} name - repo name [owner]/[repo]
  * @property {string} etag
  * @property {string} last_modified, RFC 2822 string
@@ -24,38 +25,62 @@ import _ from 'lodash'
  */
 
 /**
- * This is synced by browser.
- * @returns {Promise<string[]>} A Promise fulfilled with array of repo names ([owner]/[repo]) if succeeded.
+ * For popup page
+ * @type {object}
+ * @property {module:API~getRepoNames} getRepoNames
+ * @property {module:API~getReleaseData} getReleaseData
+ * @property {module:API~getAllReleaseData} getAllReleaseData
+ * @property {module:API~getScheduleInfo} getScheduleInfo
+ * @property {module:API~requestCheckRepos} requestCheckRepos
+ * @property {module:API~addRepoNamesListener} addRepoNamesListener
+ * @property {module:API~addReleaseDataListener} addReleaseDataListener
+ * @property {module:API~addRepoUpdatedListener} addRepoUpdatedListener
+ * @property {module:API~addScheduleInfoListener} addScheduleInfoListener
  */
-export function getRepoNames () {
-  return browser.storage.sync.get('repos')
-    .then(({repos}) => repos || [])
+export const client = {
+  getRepoNames,
+  getReleaseData,
+  getAllReleaseData,
+  getScheduleInfo,
+  requestCheckRepos,
+  addRepoNamesListener,
+  addReleaseDataListener,
+  addRepoUpdatedListener,
+  addScheduleInfoListener,
 }
 
 /**
- * This is synced by browser.
- * @fires browser.storage#onChanged
- * @param {string[]} names - array of repo names. [owner]/[repo]
- * @returns {Promise} A Promise fulfilled with no argument if succeeded.
+ * For background page
+ * @type {object}
+ * @property {module:API~getRepoNames} getRepoNames
+ * @property {module:API~getReleaseData} getReleaseData
+ * @property {module:API~getScheduleInfo} getScheduleInfo
+ * @property {module:API~saveRepoNames} saveRepoNames
+ * @property {module:API~saveScheduleInfo} saveScheduleInfo
+ * @property {module:API~checkRepos} checkRepos
+ * @property {module:API~addCheckReposRequestListener} addCheckReposRequestListener
  */
-export function saveRepoNames (names) {
-  if (process.env.DEBUG_MODE) {
-    console.assert(_.every(names, _.isString))
-  }
-  return browser.storage.sync.set({repos: names})
+export const server = {
+  getRepoNames,
+  getReleaseData,
+  getScheduleInfo,
+  saveRepoNames,
+  saveScheduleInfo,
+  checkRepos,
+  addCheckReposRequestListener,
 }
 
 /**
-* @callback RepoNamesChangedCallback
-* @param {string[]} names
-*/
+ * @callback RepoNamesChangedCallback
+ * @param {string[]} names
+ */
 
 /**
- * Listen sync storage change
- * @param {RepoNamesChangedCallback} callback
- * @listens browser.storage#onChanged
+ * Listens sync storage change
+ * @param {module:API~RepoNamesChangedCallback} callback
+ * @listens browser.storage.onChanged
  */
-export function listenRepoNames (callback) {
+function addRepoNamesListener (callback) {
   if (!_.isFunction(callback)) {
     throw new TypeError('arg 1 should be a function.')
   }
@@ -67,41 +92,37 @@ export function listenRepoNames (callback) {
 }
 
 /**
- * Get release info of a repo
- * @param {string} name - repo name
- * @returns {Promise<ReleaseData>} A Promise fulfilled with ReleaseData object if succeeded.
+ * This is synced by browser.
+ * @fires browser.storage.onChanged
+ * @param {string[]} names - array of repo names. [owner]/[repo]
+ * @returns {Promise} A Promise fulfilled with no argument if succeeded.
  */
-export function getReleaseData (name) {
-  return browser.storage.local.get(name)
-    .then(response => {
-      if (response[name]) {
-        return response[name]
-      }
-      return fetchReleaseData({name})
-        .then(_.partial(_.tap, _, saveReleaseData))
-    })
+function saveRepoNames (names) {
+  if (process.env.DEBUG_MODE) {
+    console.assert(_.every(names, _.isString))
+  }
+  return browser.storage.sync.set({repos: names})
 }
 
 /**
- * Save release data to local storage
- * @fires browser.storage#onChanged
- * @param {ReleaseData} releaseData
- * @returns {Promise} A Promise fulfilled with no argument if succeeded.
+ * This is synced by browser.
+ * @returns {Promise<string[]>} A Promise fulfilled with array of repo names ([owner]/[repo]) if succeeded.
  */
-export function saveReleaseData (releaseData) {
-  return browser.storage.local.set({[releaseData.name]: releaseData})
+function getRepoNames () {
+  return browser.storage.sync.get('repos')
+    .then(({repos}) => repos || [])
 }
 
 /**
  * @callback ReleaseDataChangedCallback
- * @param {ReleaseData} releaseData
+ * @param {module:API~ReleaseData} releaseData
  */
 
 /**
- * Listen local storage change
- * @param {ReleaseDataChangedCallback} callback
+ * Listens local storage change
+ * @param {module:API~ReleaseDataChangedCallback} callback
  */
-export function listenReleaseData (callback) {
+function addReleaseDataListener (callback) {
   if (!_.isFunction(callback)) {
     throw new TypeError('arg 1 should be a function.')
   }
@@ -119,10 +140,36 @@ export function listenReleaseData (callback) {
 }
 
 /**
- * Get release info of all repos
- * @returns {Promise<ReleaseData[]>} A Promise fulfilled with array of ReleaseData objects if succeeded.
+ * Save release data to local storage
+ * @fires browser.storage.onChanged
+ * @param {module:API~ReleaseData} releaseData
+ * @returns {Promise} A Promise fulfilled with no argument if succeeded.
  */
-export function getAllReleaseData () {
+function saveReleaseData (releaseData) {
+  return browser.storage.local.set({[releaseData.name]: releaseData})
+}
+
+/**
+ * Get release info of a repo
+ * @param {string} name - repo name
+ * @returns {Promise<module:API~ReleaseData>} A Promise fulfilled with ReleaseData object if succeeded.
+ */
+function getReleaseData (name) {
+  return browser.storage.local.get(name)
+    .then(response => {
+      if (response[name]) {
+        return response[name]
+      }
+      return fetchReleaseData({name})
+        .then(_.partial(_.tap, _, saveReleaseData))
+    })
+}
+
+/**
+ * Get release info of all repos
+ * @returns {Promise<module:API~ReleaseData[]>} A Promise fulfilled with array of ReleaseData objects if succeeded.
+ */
+function getAllReleaseData () {
   return getRepoNames()
     .then(names => Promise.all(names.map(getReleaseData)))
 }
@@ -130,10 +177,10 @@ export function getAllReleaseData () {
 /**
  * Fetch release info from github
  * @todo oauth token
- * @param {ReleaseData} releaseData - only name is mandatory
- * @returns {Promise<ReleaseData>} A Promise fulfilled with ReleaseData object if succeeded.
+ * @param {module:API~ReleaseData} releaseData - only name is mandatory
+ * @returns {Promise<module:API~ReleaseData>} A Promise fulfilled with ReleaseData object if succeeded.
  */
-export function fetchReleaseData (releaseData) {
+function fetchReleaseData (releaseData) {
   const headers = new Headers({
     'Accept': 'application/vnd.github.v3+json'
   })
@@ -172,7 +219,39 @@ export function fetchReleaseData (releaseData) {
 }
 
 /**
- * @typedef msgRepoUpdate
+ * @typedef {object} MsgREQ_CHECK_REPOS
+ * @property {string} type - 'REQ_CHECK_REPOS'
+ */
+
+/**
+ * @event REQ_CHECK_REPOS
+ * @type {MsgREQ_CHECK_REPOS}
+ */
+
+/**
+ * Listen request from other pages and check repos
+ * @listens REQ_CHECK_REPOS
+ */
+function addCheckReposRequestListener () {
+  browser.runtime.onMessage.addListener(message => {
+    if (message.type === 'REQ_CHECK_REPOS') {
+      return checkRepos()
+        .then(() => true)
+    }
+  })
+}
+
+/**
+ * Request background page to check repos
+ * @fires REQ_CHECK_REPOS
+ * @returns {Promise<boolean>} A Promise fulfilled with boolean true if repos check complete.
+ */
+function requestCheckRepos () {
+  return browser.runtime.sendMessage({type: 'REQ_CHECK_REPOS'})
+}
+
+/**
+ * @typedef {object} MsgRepoUpdate
  * @property {string} type - 'REPO_UPDATED'
  * @property {number} total - total repo count
  * @property {number} success - success count
@@ -180,16 +259,38 @@ export function fetchReleaseData (releaseData) {
  */
 
 /**
- * @event browser.runtime#REPO_UPDATED
- * @type {msgRepoUpdate}
+ * @event REPO_UPDATED
+ * @type {module:API~MsgRepoUpdate}
  */
 
 /**
- * Check for repo update
- * @fires browser.storage#onChanged
- * @returns {Promise<ReleaseData>} A Promise fulfilled with no argument if succeeded.
+ * @callback RepoUpdatedCallback
+ * @param {module:API~MsgRepoUpdate} message
  */
-export function checkRepos () {
+
+/**
+ * @param {module:API~RepoUpdatedCallback} callback
+ * @listens REPO_UPDATED
+ */
+function addRepoUpdatedListener (callback) {
+  if (!_.isFunction(callback)) {
+    throw new TypeError('arg 1 should be a function.')
+  }
+  browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.type === 'REPO_UPDATED') {
+      callback(message)
+      sendResponse()
+    }
+  })
+}
+
+/**
+ * Check for repo update
+ * @fires browser.storage.onChanged
+ * @fires REPO_UPDATED
+ * @returns {Promise<module:API~ReleaseData>} A Promise fulfilled with no argument if succeeded.
+ */
+function checkRepos () {
   return getAllReleaseData()
     .then(releases => {
       const total = releases.length
@@ -223,22 +324,71 @@ export function checkRepos () {
 }
 
 /**
- * @callback RepoUpdatedCallback
- * @param {msgRepoUpdate} message
+ * @typedef {object} ScheduleInfo
+ * @property {number} lastCheck - last check time, Unix Timestamp in milliseconds
+ * @property {number} period - check period in minutes, default to 15
  */
 
 /**
- * @param {RepoUpdatedCallback} callback
- * @listens browser.runtime#REPO_UPDATED
+ * @callback ScheduleInfoChangedCallback
+ * @param {module:API~ScheduleInfo} scheduleInfo
  */
-export function listenRepoUpdate (callback) {
+
+ /**
+  * @param {module:API~ScheduleInfoChangedCallback} callback
+  * @listens browser.storage.onChanged
+  */
+function addScheduleInfoListener (callback) {
   if (!_.isFunction(callback)) {
     throw new TypeError('arg 1 should be a function.')
   }
-  browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message.type === 'REPO_UPDATED') {
-      callback(message)
-      sendResponse()
+  browser.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName === 'local' && changes.scheduleInfo) {
+      callback(changes.scheduleInfo.newValue)
     }
   })
+}
+
+/**
+ * @fires browser.storage.onChanged
+ * @param {module:API~ScheduleInfo} scheduleInfo
+ * @returns {Promise} A Promise fulfilled with no argument if succeeded.
+ */
+function saveScheduleInfo (scheduleInfo) {
+  if (process.env.DEBUG_MODE) {
+    console.assert(
+      _.isNumber(scheduleInfo.lastCheck) && _.isNumber(scheduleInfo.period),
+      `saveScheduleInfo: last check ${scheduleInfo.lastCheck}, period ${scheduleInfo.period}`
+    )
+  }
+  return browser.storage.local.get('scheduleInfo')
+    .then(({scheduleInfo}) => {
+      if (scheduleInfo) {
+        return scheduleInfo
+      }
+      scheduleInfo = {
+        lastCheck: Date.now(),
+        period: 15
+      }
+      return browser.storage.local.set({scheduleInfo})
+        .then(_.constant(scheduleInfo))
+    })
+}
+
+/**
+ * @returns {Promise<module:API~ScheduleInfo>}
+ */
+function getScheduleInfo () {
+  return browser.storage.local.get('scheduleInfo')
+    .then(({scheduleInfo}) => {
+      if (scheduleInfo) {
+        return scheduleInfo
+      }
+      scheduleInfo = {
+        lastCheck: Date.now(),
+        period: 15
+      }
+      return browser.storage.local.set({scheduleInfo})
+        .then(_.constant(scheduleInfo))
+    })
 }
