@@ -80,7 +80,7 @@ export const server = {
  * @param {module:API~RepoNamesChangedCallback} callback
  * @listens browser.storage.onChanged
  */
-function addRepoNamesListener (callback) {
+export function addRepoNamesListener (callback) {
   if (!_.isFunction(callback)) {
     throw new TypeError('arg 1 should be a function.')
   }
@@ -97,7 +97,7 @@ function addRepoNamesListener (callback) {
  * @param {string[]} names - array of repo names. [owner]/[repo]
  * @returns {Promise} A Promise fulfilled with no argument if succeeded.
  */
-function saveRepoNames (names) {
+export function saveRepoNames (names) {
   if (process.env.DEBUG_MODE) {
     console.assert(_.every(names, _.isString))
   }
@@ -108,7 +108,7 @@ function saveRepoNames (names) {
  * This is synced by browser.
  * @returns {Promise<string[]>} A Promise fulfilled with array of repo names ([owner]/[repo]) if succeeded.
  */
-function getRepoNames () {
+export function getRepoNames () {
   return browser.storage.sync.get('repos')
     .then(({repos}) => repos || [])
 }
@@ -122,7 +122,7 @@ function getRepoNames () {
  * Listens local storage change
  * @param {module:API~ReleaseDataChangedCallback} callback
  */
-function addReleaseDataListener (callback) {
+export function addReleaseDataListener (callback) {
   if (!_.isFunction(callback)) {
     throw new TypeError('arg 1 should be a function.')
   }
@@ -145,7 +145,7 @@ function addReleaseDataListener (callback) {
  * @param {module:API~ReleaseData} releaseData
  * @returns {Promise} A Promise fulfilled with no argument if succeeded.
  */
-function saveReleaseData (releaseData) {
+export function saveReleaseData (releaseData) {
   return browser.storage.local.set({[releaseData.name]: releaseData})
 }
 
@@ -154,7 +154,7 @@ function saveReleaseData (releaseData) {
  * @param {string} name - repo name
  * @returns {Promise<module:API~ReleaseData>} A Promise fulfilled with ReleaseData object if succeeded.
  */
-function getReleaseData (name) {
+export function getReleaseData (name) {
   return browser.storage.local.get(name)
     .then(response => {
       if (response[name]) {
@@ -169,7 +169,7 @@ function getReleaseData (name) {
  * Get release info of all repos
  * @returns {Promise<module:API~ReleaseData[]>} A Promise fulfilled with array of ReleaseData objects if succeeded.
  */
-function getAllReleaseData () {
+export function getAllReleaseData () {
   return getRepoNames()
     .then(names => Promise.all(names.map(getReleaseData)))
 }
@@ -180,7 +180,7 @@ function getAllReleaseData () {
  * @param {module:API~ReleaseData} releaseData - only name is mandatory
  * @returns {Promise<module:API~ReleaseData>} A Promise fulfilled with ReleaseData object if succeeded.
  */
-function fetchReleaseData (releaseData) {
+export function fetchReleaseData (releaseData) {
   const headers = new Headers({
     'Accept': 'application/vnd.github.v3+json'
   })
@@ -232,7 +232,7 @@ function fetchReleaseData (releaseData) {
  * Listen request from other pages and check repos
  * @listens REQ_CHECK_REPOS
  */
-function addCheckReposRequestListener () {
+export function addCheckReposRequestListener () {
   browser.runtime.onMessage.addListener(message => {
     if (message.type === 'REQ_CHECK_REPOS') {
       return checkRepos()
@@ -246,7 +246,7 @@ function addCheckReposRequestListener () {
  * @fires REQ_CHECK_REPOS
  * @returns {Promise<boolean>} A Promise fulfilled with boolean true if repos check complete.
  */
-function requestCheckRepos () {
+export function requestCheckRepos () {
   return browser.runtime.sendMessage({type: 'REQ_CHECK_REPOS'})
 }
 
@@ -272,7 +272,7 @@ function requestCheckRepos () {
  * @param {module:API~RepoUpdatedCallback} callback
  * @listens REPO_UPDATED
  */
-function addRepoUpdatedListener (callback) {
+export function addRepoUpdatedListener (callback) {
   if (!_.isFunction(callback)) {
     throw new TypeError('arg 1 should be a function.')
   }
@@ -290,7 +290,7 @@ function addRepoUpdatedListener (callback) {
  * @fires REPO_UPDATED
  * @returns {Promise<module:API~ReleaseData>} A Promise fulfilled with no argument if succeeded.
  */
-function checkRepos () {
+export function checkRepos () {
   return getAllReleaseData()
     .then(releases => {
       const total = releases.length
@@ -338,7 +338,7 @@ function checkRepos () {
   * @param {module:API~ScheduleInfoChangedCallback} callback
   * @listens browser.storage.onChanged
   */
-function addScheduleInfoListener (callback) {
+export function addScheduleInfoListener (callback) {
   if (!_.isFunction(callback)) {
     throw new TypeError('arg 1 should be a function.')
   }
@@ -354,7 +354,7 @@ function addScheduleInfoListener (callback) {
  * @param {module:API~ScheduleInfo} scheduleInfo
  * @returns {Promise} A Promise fulfilled with no argument if succeeded.
  */
-function saveScheduleInfo (scheduleInfo) {
+export function saveScheduleInfo (scheduleInfo) {
   if (process.env.DEBUG_MODE) {
     console.assert(
       _.isNumber(scheduleInfo.lastCheck) && _.isNumber(scheduleInfo.period),
@@ -378,14 +378,15 @@ function saveScheduleInfo (scheduleInfo) {
 /**
  * @returns {Promise<module:API~ScheduleInfo>}
  */
-function getScheduleInfo () {
+export function getScheduleInfo () {
   return browser.storage.local.get('scheduleInfo')
     .then(({scheduleInfo}) => {
       if (scheduleInfo) {
         return scheduleInfo
       }
       scheduleInfo = {
-        lastCheck: Date.now(),
+        isChecking: false,
+        lastCheck: null,
         period: 15
       }
       return browser.storage.local.set({scheduleInfo})
