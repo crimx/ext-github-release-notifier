@@ -4644,6 +4644,248 @@ pretty-error@^2.0.2:
     renderkid "^2.0.1"
     utila "~0.4"
 
+primer-alerts@1.5.3:
+  version "1.5.3"
+  resolved "http://registry.npm.taobao.org/primer-alerts/download/primer-alerts-1.5.3.tgz#8d23796bd28e09a784738fdb43798c9a2c0c93cf"
+  dependencies:
+    primer-support "4.5.0"
+
+primer-avatars@1.5.0:
+  version "1.5.0"
+  resolved "http://registry.npm.taobao.org/primer-avatars/download/primer-avatars-1.5.0.tgz#36f920e186fb7d300306e1c80ea30762e578c1af"
+  dependencies:
+    primer-support "4.5.0"
+
+primer-base@1.6.1:
+  version "1.6.1"
+  resolved "http://registry.npm.taobao.org/primer-base/download/primer-base-1.6.1.tgz#5580a8e8bbdd6df65a2c4bf932a26955248b30f0"
+  dependencies:
+    primer-support "4.5.0"
+
+primer-blankslate@1.4.3:
+  version "1.4.3"
+  resolved "http://registry.npm.taobao.org/primer-blankslate/download/primer-blankslate-1.4.3.tgz#df7686b55f3d3dbf5dbda1fbb8d0d4ffcb83f1fd"
+  dependencies:
+    primer-support "4.5.0"
+
+primer-box@2.5.3:
+  version "2.5.3"
+  resolved "http://registry.npm.taobao.org/primer-box/download/primer-box-2.5.3.tgz#311ee00d4a3fd4e3c180ccfe4b7b015ef421d1d7"
+  dependencies:
+    primer-support "4.5.0"
+
+primer-branch-name@1.0.1:
+  version "1.0.1"
+  resolved "http://registry.npm.taobao.org/primer-branch-name/download/primer-branch-name-1.0.1.tgz#3d89b92aacf6a12061b4fe953e569e251804c04b"
+  dependencies:
+    primer-support "4.5.0"
+
+primer-breadcrumb@1.4.3:
+  version "1.4.3"
+  resolved "http://registry.npm.taobao.org/primer-breadcrumb/download/primer-breadcrumb-1.4.3.tgz#e2807d7a9f5a5509b221255e1685f2c93a1ebd91"
+  dependencies:
+    primer-support "4.5.0"
+
+primer-buttons@2.5.1:
+  version "2.5.1"
+  resolved "http://registry.npm.taobao.org/primer-buttons/download/primer-buttons-2.5.1.tgz#f408c4055670bd0fb7a60fb74076f2b187c32199"
+  dependencies:
+    primer-support "4.5.0"
+
+primer-core@6.6.0:
+  version "6.6.0"
+  resolved "http://registry.npm.taobao.org/primer-core/download/primer-core-6.6.0.tgz#38f107f99ed4084521417852288fb2f1d4923a2e"
+  dependencies:
+    primer-base "1.6.1"
+    primer-box "2.5.3"
+    primer-breadcrumb "1.4.3"
+    primer-buttons "2.5.1"
+    primer-forms "2.0.1"
+    primer-layout "1.4.3"
+    primer-navigation "1.5.1"
+    primer-support "4.5.0"
+    primer-table-object "1.4.3"
+    primer-tooltips "1.5.0"
+    primer-truncate "1.4.3"
+    primer-utilities "4.8.3"
+
+primer-forms@2.0.1:
+  version "2.0.1"
+  resolved "http://registry.npm.taobao.org/primer-forms/download/primer-forms-2.0.1.tgz#89b73028fec60e03d95f8bbb16ebe97c0caa42ef"
+  dependencies:
+    primer-support "4.5.0"
+
+primer-labels@1.5.3:
+  version "1.5.3"
+  resolved "http://registry.npm.taobao.org/primer-labels/download/primer-labels-1.5.3.tgz#69df688790fb1b3013e846fe327a0711c0404389"
+  dependencies:
+    primer-support "4.5.0"
+
+primer-layout@1.4.3:
+  version "1.4.3"
+  resolved "http://registry.npm.taobao.org/primer-layout/download/primer-layout-1.4.3.tgz#d6f7d5d3b0c446582205fefd5e7c8d36b0e1e7b3"
+  dependencies:
+    primer-support "4.5.0"
+
+primer-markdown@3.7.3:
+  version "3.7.3"
+  resolved "http://registry.npm.taobao.org/primer-markdown/download/primer-markdown-3.7.3.tgz#9ca250eb912cf31dedddcb2fc30792eddd4f2d5d"
+  dependencies:
+    primer-support "4.5.0"
+
+primer-marketing-buttons@1.0.2:
+  version "1.0.2"
+  resolved "http://registry.npm.taobao.org/primer-marketing-buttons/download/primer-marketing-buttons-1.0.2.tgz#c7b6803e66e604c1f446b2cf357495a69c367738"
+  dependencies:
+    primer-support "4.5.0"
+
+primer-marketing-support@1.3.3:
+  version "1.3.3"
+  resolved "http://registry.npm.taobao.org/primer-marketing-support/download/primer-marketing-support-1.3.3.tgz#e299ec3e64949981ffb23a6960f0e1c86f64c694"
+
+primer-marketing-type@1.4.3:
+  version "1.4.3"
+  resolved "http://registry.npm.taobao.org/primer-marketing-type/download/primer-marketing-type-1.4.3.tgz#7848b53fedc90fcf40c274a61ef75cb56de2d5fa"
+  dependencies:
+    primer-marketing-support "1.3.3"
+    primer-support "4.5.0"
+
+primer-marketing-utilities@1.5.1:
+  version "1.5.1"
+  resolved "http://registry.npm.taobao.org/primer-marketing-utilities/download/primer-marketing-utilities-1.5.1.tgz#3195e003ccff415eb8643150f970b86983ca0f4b"
+  dependencies:
+    primer-marketing-support "1.3.3"
+    primer-support "4.5.0"
+
+primer-marketing@6.0.2:
+  version "6.0.2"
+  resolved "http://registry.npm.taobao.org/primer-marketing/download/primer-marketing-6.0.2.tgz#0b69dd44d61ef0821a4fcadc10d57ac6c2174b7d"
+  dependencies:
+    primer-marketing-buttons "1.0.2"
+    primer-marketing-support "1.3.3"
+    primer-marketing-type "1.4.3"
+    primer-marketing-utilities "1.5.1"
+    primer-page-headers "1.4.3"
+    primer-page-sections "1.4.3"
+    primer-support "4.5.0"
+    primer-tables "1.4.3"
+
+primer-navigation@1.5.1:
+  version "1.5.1"
+  resolved "http://registry.npm.taobao.org/primer-navigation/download/primer-navigation-1.5.1.tgz#40e169776a42ee7eb2ea4c5e3b23059a2b27ac3d"
+  dependencies:
+    primer-support "4.5.0"
+
+primer-page-headers@1.4.3:
+  version "1.4.3"
+  resolved "http://registry.npm.taobao.org/primer-page-headers/download/primer-page-headers-1.4.3.tgz#e044b6a1e70f59534904624f82e4a2d7095777bc"
+  dependencies:
+    primer-marketing-support "1.3.3"
+    primer-support "4.5.0"
+
+primer-page-sections@1.4.3:
+  version "1.4.3"
+  resolved "http://registry.npm.taobao.org/primer-page-sections/download/primer-page-sections-1.4.3.tgz#02a98be3e984884a8de9730deb4d74ca60e7adb9"
+  dependencies:
+    primer-marketing-support "1.3.3"
+    primer-support "4.5.0"
+
+primer-popover@0.0.4:
+  version "0.0.4"
+  resolved "http://registry.npm.taobao.org/primer-popover/download/primer-popover-0.0.4.tgz#3b6cbdc0ee5d4a630a1f1136c2dc617f9aafb7ba"
+  dependencies:
+    primer-support "4.5.0"
+
+primer-product@5.6.0:
+  version "5.6.0"
+  resolved "http://registry.npm.taobao.org/primer-product/download/primer-product-5.6.0.tgz#0a482c7e7489384405e58942b6b6664a3a8be83d"
+  dependencies:
+    primer-alerts "1.5.3"
+    primer-avatars "1.5.0"
+    primer-blankslate "1.4.3"
+    primer-branch-name "1.0.1"
+    primer-labels "1.5.3"
+    primer-markdown "3.7.3"
+    primer-popover "0.0.4"
+    primer-subhead "1.0.1"
+    primer-support "4.5.0"
+
+primer-subhead@1.0.1:
+  version "1.0.1"
+  resolved "http://registry.npm.taobao.org/primer-subhead/download/primer-subhead-1.0.1.tgz#48382902ab96d9975e869e1cd8d5f3dbe5f4a262"
+  dependencies:
+    primer-support "4.5.0"
+
+primer-support@4.5.0:
+  version "4.5.0"
+  resolved "http://registry.npm.taobao.org/primer-support/download/primer-support-4.5.0.tgz#4354e6527ab2a4fb8e33b61b4c6dfd1af5410e63"
+
+primer-table-object@1.4.3:
+  version "1.4.3"
+  resolved "http://registry.npm.taobao.org/primer-table-object/download/primer-table-object-1.4.3.tgz#af6b33e0c47357d1be1b1b94fa9ffa012004520c"
+  dependencies:
+    primer-support "4.5.0"
+
+primer-tables@1.4.3:
+  version "1.4.3"
+  resolved "http://registry.npm.taobao.org/primer-tables/download/primer-tables-1.4.3.tgz#7b6cf35692cfb1b60a930027dff7bcb0dc1a90aa"
+  dependencies:
+    primer-marketing-support "1.3.3"
+    primer-support "4.5.0"
+
+primer-tooltips@1.5.0:
+  version "1.5.0"
+  resolved "http://registry.npm.taobao.org/primer-tooltips/download/primer-tooltips-1.5.0.tgz#18528a59d9a0e4edb24a6dfa869bf400e14b6e79"
+  dependencies:
+    primer-support "4.5.0"
+
+primer-truncate@1.4.3:
+  version "1.4.3"
+  resolved "http://registry.npm.taobao.org/primer-truncate/download/primer-truncate-1.4.3.tgz#79339a850398283a4f8b61044087b0ca4ef4e3d3"
+  dependencies:
+    primer-support "4.5.0"
+
+primer-utilities@4.8.3:
+  version "4.8.3"
+  resolved "http://registry.npm.taobao.org/primer-utilities/download/primer-utilities-4.8.3.tgz#27f5cf10ceb175221623ff10a4cedfcd8d654aa8"
+  dependencies:
+    primer-support "4.5.0"
+
+primer@^10.1.0:
+  version "10.1.0"
+  resolved "http://registry.npm.taobao.org/primer/download/primer-10.1.0.tgz#bd68a9eb4c0de6984ba597b9ce161247476e40be"
+  dependencies:
+    primer-alerts "1.5.3"
+    primer-avatars "1.5.0"
+    primer-base "1.6.1"
+    primer-blankslate "1.4.3"
+    primer-box "2.5.3"
+    primer-branch-name "1.0.1"
+    primer-breadcrumb "1.4.3"
+    primer-buttons "2.5.1"
+    primer-core "6.6.0"
+    primer-forms "2.0.1"
+    primer-labels "1.5.3"
+    primer-layout "1.4.3"
+    primer-markdown "3.7.3"
+    primer-marketing "6.0.2"
+    primer-marketing-buttons "1.0.2"
+    primer-marketing-support "1.3.3"
+    primer-marketing-type "1.4.3"
+    primer-marketing-utilities "1.5.1"
+    primer-navigation "1.5.1"
+    primer-page-headers "1.4.3"
+    primer-page-sections "1.4.3"
+    primer-popover "0.0.4"
+    primer-product "5.6.0"
+    primer-subhead "1.0.1"
+    primer-support "4.5.0"
+    primer-table-object "1.4.3"
+    primer-tables "1.4.3"
+    primer-tooltips "1.5.0"
+    primer-truncate "1.4.3"
+    primer-utilities "4.8.3"
+
 private@^0.1.6, private@^0.1.7:
   version "0.1.8"
   resolved "http://registry.npm.taobao.org/private/download/private-0.1.8.tgz#2381edb3689f7a53d653190060fcf822d2f368ff"
@@ -5954,6 +6196,12 @@ vue-loader@^13.3.0:
     vue-style-loader "^3.0.0"
     vue-template-es2015-compiler "^1.6.0"
 
+vue-octicon@^2.1.1:
+  version "2.1.1"
+  resolved "http://registry.npm.taobao.org/vue-octicon/download/vue-octicon-2.1.1.tgz#c1841ba5d1dd9acbffd497794c947823fcb25c3e"
+  dependencies:
+    vue "^2.0.1"
+
 vue-style-loader@^3.0.0, vue-style-loader@^3.0.1:
   version "3.0.3"
   resolved "http://registry.npm.taobao.org/vue-style-loader/download/vue-style-loader-3.0.3.tgz#623658f81506aef9d121cdc113a4f5c9cac32df7"
@@ -5971,6 +6219,10 @@ vue-template-compiler@^2.5.2:
 vue-template-es2015-compiler@^1.6.0:
   version "1.6.0"
   resolved "http://registry.npm.taobao.org/vue-template-es2015-compiler/download/vue-template-es2015-compiler-1.6.0.tgz#dc42697133302ce3017524356a6c61b7b69b4a18"
+
+vue@^2.0.1:
+  version "2.5.10"
+  resolved "http://registry.npm.taobao.org/vue/download/vue-2.5.10.tgz#dcd772e2594ba994145f2f09522149d9a1e7841a"
 
 vue@^2.5.2:
   version "2.5.9"
