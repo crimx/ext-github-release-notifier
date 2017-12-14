@@ -7,7 +7,7 @@ import fetchMock from 'fetch-mock'
 import faker from 'faker'
 import moment from 'moment'
 import _ from 'lodash'
-import { extData } from '@/popup/file-type-icons'
+import { extData, getFileIcon } from '@/popup/file-type-icons'
 
 const exts = Array.from(extData.keys())
 
@@ -22,8 +22,6 @@ function randInt (a, b) {
   return Math.floor(Math.random() * (b - a) + a)
 }
 
-// window.chrome = chrome
-
 window.chrome = {
   storage: {
     local: {},
@@ -32,6 +30,7 @@ window.chrome = {
   },
   runtime: {
     onMessage: {},
+    getURL (name) { return '/' + name },
   }
 }
 
@@ -54,7 +53,8 @@ const storage = {
       'last_modified': date.format('ddd, DD MMM Y HH:mm:ss ') + 'GMT',
       'html_url': `https://github.com/${name}/releases/${version}`,
       'avatar_url': `https://avatars2.githubusercontent.com/u/${randInt(100000)}?v=4`,
-      'published_at': date.toISOString(),
+      'author_url': `https://github.com/${name.split('/')[0]}`,
+      'published_at': date.valueOf(),
       'tag_name': version,
       'zipball_url': `https://api.github.com/repos/${name}/zipball/${version}`,
       'tarball_url': `https://api.github.com/repos/${name}/tarball/${version}`,
@@ -63,6 +63,7 @@ const storage = {
         return {
           'browser_download_url': `https://github.com/${name}/releases/download/${version}/${filename}`,
           'name': filename,
+          'icon_name': getFileIcon(filename),
         }
       })
     }
@@ -185,6 +186,7 @@ fetchMock.mock({
             'html_url': `https://github.com/${name}/releases/${version}`,
             'author': {
               'avatar_url': `https://avatars2.githubusercontent.com/u/${randInt(100000)}?v=4`,
+              'html_url': `https://github.com/${name.split('/')[0]}`,
             },
             'published_at': date.toISOString(),
             'tag_name': version,
@@ -195,6 +197,7 @@ fetchMock.mock({
               return {
                 'browser_download_url': `https://github.com/${name}/releases/download/${version}/${filename}`,
                 'name': filename,
+                'icon_name': getFileIcon(filename),
               }
             })
           }

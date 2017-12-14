@@ -5,6 +5,7 @@
 
 import browser from 'webextension-polyfill'
 import _ from 'lodash'
+import { getFileIcon } from '@/popup/file-type-icons'
 
 /**
  * Release data, for generating Map
@@ -14,14 +15,16 @@ import _ from 'lodash'
  * @property {string} etag
  * @property {string} last_modified, RFC 2822 string
  * @property {string} avatar_url - author avatar
+ * @property {string} author_url
  * @property {string} html_url - release page
- * @property {string} published_at - publish date, ISO 8601 string
+ * @property {number} published_at - publish date, Unix Timestamp in milliseconds
  * @property {string} tag_name - release tag
  * @property {string} zipball_url
  * @property {string} tarball_url
  * @property {object[]} assets
  * @property {string} assets[].browser_download_url - file url
  * @property {string} assets[].name - file name
+ * @property {string} assets[].icon_name
  */
 
 /**
@@ -34,7 +37,7 @@ import _ from 'lodash'
  * @property {module:API~requestCheckRepos} requestCheckRepos
  * @property {module:API~addRepoNamesListener} addRepoNamesListener
  * @property {module:API~addReleaseDataListener} addReleaseDataListener
- * @property {module:API~addRepoUpdatedListener} addRepoUpdatedListener
+ * @property {module:API~addRepoCheckListener} addRepoCheckListener
  * @property {module:API~addScheduleInfoListener} addScheduleInfoListener
  */
 export const client = {
@@ -45,7 +48,7 @@ export const client = {
   requestCheckRepos,
   addRepoNamesListener,
   addReleaseDataListener,
-  addRepoUpdatedListener,
+  addRepoCheckListener,
   addScheduleInfoListener,
 }
 
@@ -206,14 +209,18 @@ export function fetchReleaseData (releaseData) {
           etag: response.headers.get('etag') || '',
           last_modified: response.headers.get('last-modified') || '',
           avatar_url: json.author.avatar_url,
+          author_url: json.author.html_url,
+          published_at: new Date(json.published_at).valueOf(),
           ..._.pick(json, [
             'html_url',
-            'published_at',
             'tag_name',
             'zipball_url',
             'tarball_url',
           ]),
-          assets: _.map(json.assets || [], _.partial(_.pick, _, ['browser_download_url', 'name']))
+          assets: _.map(json.assets || [], asset => ({
+            ..._.pick(asset, ['browser_download_url', 'name']),
+            icon_name: getFileIcon(asset.name),
+          }))
         }))
     })
 }
@@ -252,34 +259,33 @@ export function requestCheckRepos () {
 
 /**
  * @typedef {object} MsgRepoUpdate
- * @property {string} type - 'REPO_UPDATED'
+ * @property {string} type - 'REPO_CHECK_UPDATED'
  * @property {number} total - total repo count
  * @property {number} success - success count
  * @property {number} failed - failed count
  */
 
 /**
- * @event REPO_UPDATED
+ * @event REPO_CHECK_UPDATED
  * @type {module:API~MsgRepoUpdate}
  */
 
 /**
- * @callback RepoUpdatedCallback
+ * @callback RepoCheckCallback
  * @param {module:API~MsgRepoUpdate} message
  */
 
 /**
- * @param {module:API~RepoUpdatedCallback} callback
- * @listens REPO_UPDATED
+ * @param {module:API~RepoCheckCallback} callback
+ * @listens REPO_CHECK_UPDATED
  */
-export function addRepoUpdatedListener (callback) {
+export function addRepoCheckListener (callback) {
   if (!_.isFunction(callback)) {
     throw new TypeError('arg 1 should be a function.')
   }
-  browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message.type === 'REPO_UPDATED') {
+  browser.runtime.onMessage.addListener((message, sender) => {
+    if (message.type === 'REPO_CHECK_UPDATED') {
       callback(message)
-      sendResponse()
     }
   })
 }
@@ -287,7 +293,7 @@ export function addRepoUpdatedListener (callback) {
 /**
  * Check for repo update
  * @fires browser.storage.onChanged
- * @fires REPO_UPDATED
+ * @fires REPO_CHECK_UPDATED
  * @returns {Promise<module:API~ReleaseData>} A Promise fulfilled with no argument if succeeded.
  */
 export function checkRepos () {
@@ -303,7 +309,7 @@ export function checkRepos () {
               success += 1
               saveReleaseData(newData)
               browser.runtime.sendMessage({
-                type: 'REPO_UPDATED',
+                type: 'REPO_CHECK_UPDATED',
                 total,
                 success,
                 failed,
@@ -312,7 +318,7 @@ export function checkRepos () {
             .catch(() => {
               failed += 1
               browser.runtime.sendMessage({
-                type: 'REPO_UPDATED',
+                type: 'REPO_CHECK_UPDATED',
                 total,
                 success,
                 failed,
