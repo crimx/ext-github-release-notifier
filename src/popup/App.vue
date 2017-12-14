@@ -13,16 +13,93 @@
       </div>
     </header>
     <div class="pagehead-wrap">
+      <transition name="fade">
+        <div class="check-progress-bar"
+          v-if="scheduleInfo.isChecking"
+          :style="{transform: `translateX(${(repoCheckProgress.success + repoCheckProgress.failed) / repoCheckProgress.total * 100}%)`}"
+        ></div>
+      </transition>
       <div class="pagehead">
-        <transition name="pagehead-fade" mode="out-in">
-          <span v-if="scheduleInfo.isChecking">Checking...</span>
+        <transition name="out-in-fade" mode="out-in">
+          <!-- checking status -->
+          <span v-if="scheduleInfo.isChecking">
+            Checking...
+            {{ repoCheckProgress.success + repoCheckProgress.failed }}/{{ repoCheckProgress.total }}
+          </span>
+          <!-- check schedule info -->
           <div v-else>
-            <span class="mr-2"><octicon name="history"></octicon> Last check: {{ lastCheck }}</span>
+            <span class="mr-3"><octicon name="history"></octicon> Last check: {{ lastCheck }}</span>
             <span><octicon name="clock"></octicon> Next check: {{ nextCheck }}</span>
           </div>
         </transition>
       </div>
     </div>
+    <transition name="out-in-fade" mode="out-in">
+      <main class="main-container" v-if="repos.length > 0">
+        <div class="repo-item" v-for="repo in repos">
+          <!-- author avatar -->
+          <a class=" mt-2 mr-2" :href="repo.author_url" target="_blank" rel="noopener">
+            <img class="avatar" :src="repo.avatar_url" width="48" height="48" :alt="`Avatar of ${repo.name}`">
+          </a>
+          <!-- repo info -->
+          <div>
+            <!-- repo name -->
+            <h3>
+              <a :href="`https://github.com/${repo.name}`" target="_blank" rel="noopener">
+                <span class="text-normal">{{ repo.name.split('/')[0] }} / </span>{{ repo.name.split('/')[1] }}
+              </a>
+            </h3>
+            <!-- version tag name & publish date -->
+            <a class="text-gray" :href="repo.html_url" target="_blank" rel="noopener">
+              <octicon name="tag" flip="horizontal"></octicon>
+              {{ repo.tag_name }}
+              ~
+              {{ moment(repo.published_at).from(currentTime) }}
+            </a>
+          </div> <!-- repo info -->
+          <!-- assets -->
+          <div class="assets">
+            <!-- uploaded assets -->
+            <span v-for="asset in repo.assets.slice(0, 8)" class="tooltipped tooltipped-nw tooltipped-no-delay ml-3" :aria-label="asset.name">
+              <a class="asset text-gray" :href="asset.browser_download_url">
+                <octicon :name="asset.icon_name" scale="2"></octicon>
+              </a>
+            </span> <!-- uploaded assets -->
+            <!-- zipball & rarball -->
+            <template v-if="repo.assets.length <= 6">
+              <span class="tooltipped tooltipped-nw tooltipped-no-delay ml-3" aria-label="Source code (zip)">
+                <a class="asset text-gray-lighter" :href="repo.zipball_url">
+                  <octicon name="file-zip" scale="2"></octicon>
+                </a>
+              </span>
+              <span class="tooltipped tooltipped-nw tooltipped-no-delay ml-3" aria-label="Source code (tar.gz)">
+                <a class="asset text-gray-lighter" :href="repo.tarball_url">
+                  <octicon name="file-zip" scale="2"></octicon>
+                </a>
+              </span>
+            </template> <!-- zipball & rarball -->
+          </div> <!-- assets -->
+        </div> <!-- .repo-item -->
+      </main>
+      <!-- blankslate for empty repo list -->
+      <main class="main-container mt-3" v-else>
+        <div class="blankslate">
+          <octicon name="git-commit" scale="2" class="blankslate-icon"></octicon>
+          <octicon name="tag" scale="2" class="blankslate-icon"></octicon>
+          <octicon name="git-branch" scale="2" class="blankslate-icon"></octicon>
+          <h3>Empty</h3>
+          <p>Click the
+            <span class="clear-fix d-inline-block">
+              <button class="btn btn-sm btn-with-count" type="button" tabindex="-1">
+                <octicon name="eye"></octicon>
+                Watch
+              </button>
+              <span class="social-count">8</span>
+            </span>
+            button of a repo page to start watching release.</p>
+        </div>
+      </main> <!-- blankslate for empty repo list -->
+    </transition>
   </div>
 </template>
 
@@ -30,17 +107,14 @@
 import moment from 'moment'
 import { requestCheckRepos } from '@/api'
 import Octicon from 'vue-octicon/components/Octicon.vue'
-import 'vue-octicon/icons/clock'
-import 'vue-octicon/icons/history'
-import 'vue-octicon/icons/sync'
-import 'vue-octicon/icons/zap'
+import 'vue-octicon/icons'
 
 export default {
   name: 'app',
-  props: ['allReleaseData', 'scheduleInfo', 'repoCheckProgress'],
+  props: ['repos', 'scheduleInfo', 'repoCheckProgress'],
   data () {
     return {
-      currentTime: Date.now()
+      currentTime: Date.now(),
     }
   },
   components: {
@@ -60,20 +134,24 @@ export default {
       return moment(this.scheduleInfo.lastCheck)
         .add(this.scheduleInfo.period, 'minutes')
         .from(this.currentTime)
-    }
+    },
   },
   methods: {
+    moment,
     requestCheckRepos
   },
   created () {
     setInterval(() => {
       this.currentTime = Date.now()
     }, 1000)
-  }
+  },
 }
 </script>
 
 <style lang="scss">
+/*------------------------------------*\
+  #primer
+\*------------------------------------*/
 // Primer master file
 
 // Global requirements
@@ -85,11 +163,11 @@ export default {
 // @import "primer-box/index.scss";
 // @import "primer-breadcrumb/index.scss";
 @import "primer-buttons/index.scss";
-@import "primer-table-object/index.scss";
+// @import "primer-table-object/index.scss";
 @import "primer-forms/index.scss";
 @import "primer-layout/index.scss";
 // @import "primer-navigation/index.scss";
-// @import "primer-tooltips/index.scss";
+@import "primer-tooltips/index.scss";
 // @import "primer-truncate/index.scss";
 
 // Product specific css modules
@@ -115,6 +193,9 @@ export default {
 </style>
 
 <style>
+/*------------------------------------*\
+  #base
+\*------------------------------------*/
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
   font-size: 14px;
@@ -127,8 +208,11 @@ body {
 
 
 <style lang="scss">
+/*------------------------------------*\
+  #components
+\*------------------------------------*/
 %container {
-  width: 980px;
+  max-width: 980px;
   margin: 0 auto;
 }
 
@@ -137,7 +221,7 @@ body {
   padding-bottom: 12px;
   font-size: 16px;
   color: rgba(255,255,255,0.75);
-  background-color: #24292e;
+  background-color: #34495E;
 }
 
 .header {
@@ -150,7 +234,7 @@ body {
   margin-left: auto;
 
   & > * {
-    margin-left: 16px;
+    margin-left: 14px;
   }
 }
 
@@ -178,6 +262,7 @@ body {
 }
 
 .pagehead-wrap {
+  position: relative;
   padding: 10px 0;
   color: #586069;
   background: #fafbfc;
@@ -188,18 +273,65 @@ body {
   }
 }
 
+.check-progress-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.03);
+  transition: transform 0.4s;
+}
+
 .pagehead {
   @extend %container;
+  position: relative;
+  z-index: 10;
   display: flex;
   justify-content: center;
+}
+
+.main-container {
+  @extend %container;
+}
+
+.repo-item {
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  border-bottom: 1px #e1e4e8 solid;
+
+  .avatar {
+    align-self: flex-start;
+  }
+}
+
+.assets {
+  display: flex;
+  margin-left: auto;
 }
 </style>
 
 <style>
-.pagehead-fade-enter-active, .pagehead-fade-leave-active {
+/*------------------------------------*\
+  #states
+\*------------------------------------*/
+.text-gray-lighter {
+  color: #b5b5b5 !important;
+}
+
+.out-in-fade-enter-active, .out-in-fade-leave-active {
   transition: opacity .3s ease;
 }
-.pagehead-fade-enter, .pagehead-fade-leave-to {
+.out-in-fade-enter, .out-in-fade-leave-to {
+  opacity: 0;
+}
+
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 500ms;
+}
+.fade-enter, .fade-leave-active {
   opacity: 0;
 }
 </style>
