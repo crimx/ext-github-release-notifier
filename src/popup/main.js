@@ -1,7 +1,6 @@
 import Vue from 'vue'
 import App from './App'
 
-import _ from 'lodash'
 import { client as api } from '@/api'
 
 if (process.env.DEBUG_MODE) {
@@ -16,7 +15,7 @@ Promise.all([api.getAllReleaseData(), api.getScheduleInfo()])
       el: '#app',
       data () {
         return {
-          allReleaseData,
+          repos: allReleaseData.sort((a, b) => b.published_at - a.published_at),
           scheduleInfo,
           repoCheckProgress: {
             total: 0,
@@ -28,7 +27,7 @@ Promise.all([api.getAllReleaseData(), api.getScheduleInfo()])
       render (createElement) {
         return createElement(App, {
           props: {
-            allReleaseData: this.allReleaseData,
+            repos: this.repos,
             scheduleInfo: this.scheduleInfo,
             repoCheckProgress: this.repoCheckProgress
           }
@@ -39,21 +38,11 @@ Promise.all([api.getAllReleaseData(), api.getScheduleInfo()])
     api.addRepoNamesListener(() => {
       api.getAllReleaseData()
         .then(allReleaseData => {
-          vm.allReleaseData = allReleaseData
+          vm.repos = allReleaseData.sort((a, b) => b.published_at - a.published_at)
         })
     })
 
-    api.addReleaseDataListener(newData => {
-      const index = _.findIndex(vm.allReleaseData, _.matchesProperty('name', newData.name))
-      if (process.env.DEBUG_MODE) {
-        console.assert(index !== -1, 'New release data not in the list!')
-      }
-      if (index !== -1) {
-        Vue.set(vm.allReleaseData, index, newData)
-      }
-    })
-
-    api.addRepoUpdatedListener(message => {
+    api.addRepoCheckListener(message => {
       vm.repoCheckProgress = message
     })
 
