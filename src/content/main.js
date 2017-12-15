@@ -15,25 +15,24 @@ function main () {
   if (process.env.DEBUG_MODE) { console.log('Notifier: detected .subscription-menu-modal') }
   const repoNameTester = /^[^/\s]+\/[^/\s]+$/
   let meta = document.querySelector('meta[name=octolytics-dimension-repository_nwo]')
-  if (!meta || !repoNameTester.test(meta.content)) {
-    if (process.env.DEBUG_MODE) { console.log(`Notifier: ${meta.content} does't match`) }
+  if (!meta || !repoNameTester.test(meta.getAttribute('content'))) {
+    if (process.env.DEBUG_MODE) { console.log(`Notifier: ${meta.getAttribute('content')} does't match`) }
     meta = document.querySelector('meta[name=octolytics-dimension-repository_network_root_nwo]')
-    if (!meta || !repoNameTester.test(meta.content)) {
-      if (process.env.DEBUG_MODE) { console.log(`Notifier: ${meta.content} does't match`) }
+    if (!meta || !repoNameTester.test(meta.getAttribute('content'))) {
+      if (process.env.DEBUG_MODE) { console.log(`Notifier: ${meta.getAttribute('content')} does't match`) }
       return
     }
   }
-  getRepo(meta.content)
-    .then(repoData => inject(menuModal, repoData || {name: meta.content}))
+
+  getRepo(meta.getAttribute('content'))
+    .then(repoData => inject(menuModal, repoData || {name: meta.getAttribute('content')}))
 }
 
 function inject (menuModal, repoData) {
   const menuHeader = document.createElement('div')
   menuHeader.className = 'select-menu-header'
   menuHeader.tabIndex = -1
-  menuHeader.innerHTML = `
-  <a class="select-menu-title text-gray-dark no-underline" href="${(window.browser || window.chrome).runtime.getURL('popup.html')}" target="_blank" rel="noopener">Release Notifier</a>
-  `
+  menuHeader.innerHTML = '<a class="select-menu-title" href="https://github.com/crimx/ext-github-release-notifier">Release Notifier</a>'
 
   const menuList = document.createElement('div')
   menuList.className = 'select-menu-list'
