@@ -21,13 +21,14 @@ if (process.env.DEBUG_MODE) {
 addReplaceRepoRequestListener(message => {
   replaceRepo(message)
     .then(releaseData => {
+      if (!releaseData) { return }
       browser.notifications.create(
         releaseData.name, // id
         {
           type: 'basic', // Firefox currently only support basic
           title: 'Github Release Notifier',
-          message: `Start watching ${name} for releases`,
-          iconUrl: releaseData.avatar_url || browser.runtime.getURL('icon-128.png'),
+          message: `Start watching ${releaseData.name} for releases`,
+          iconUrl: browser.runtime.getURL('icon-128.png'),
         }
       )
     })
@@ -48,7 +49,7 @@ addRepoUpdatedMsgtListener(repoData => {
           type: 'basic', // Firefox currently only support basic
           title: 'Github Release Notifier',
           message: `${repoData.name} has just updated to ${repoData.tag_name}.`,
-          iconUrl: repoData.avatar_url || browser.runtime.getURL('icon-128.png'),
+          iconUrl: browser.runtime.getURL('icon-128.png'),
         }
       )
     })
