@@ -33,7 +33,11 @@ export function addCheckReposRequestListener (callback) {
   }
   browser.runtime.onMessage.addListener(message => {
     if (message.type === 'REQ_CHECK_REPOS') {
-      return callback()
+      if (process.env.DEBUG_MODE) {
+        console.log('Msg Receive: REQ_CHECK_REPOS')
+      }
+      callback()
+      return Promise.resolve()
     }
   })
 }
@@ -44,6 +48,10 @@ export function addCheckReposRequestListener (callback) {
  * @returns {Promise<boolean>} A Promise fulfilled with no argument.
  */
 export function requestCheckRepos () {
+  if (process.env.DEBUG_MODE) {
+    console.log(process.env.DEBUG_MODE)
+    console.log('fire: REQ_CHECK_REPOS')
+  }
   return browser.runtime.sendMessage({type: 'REQ_CHECK_REPOS'})
 }
 
@@ -77,7 +85,11 @@ export function addCheckReposProgressListener (callback) {
   }
   browser.runtime.onMessage.addListener(message => {
     if (message.type === 'REPO_CHECK_UPDATED') {
+      if (process.env.DEBUG_MODE) {
+        console.log('Msg Receive: REPO_CHECK_UPDATED')
+      }
       callback(message)
+      return Promise.resolve()
     }
   })
 }
@@ -88,6 +100,7 @@ export function addCheckReposProgressListener (callback) {
  */
 export function fireCheckReposProgress (message) {
   if (process.env.DEBUG_MODE) {
+    console.log('fire: REPO_CHECK_UPDATED', JSON.stringify(message))
     console.assert(_.isObject(message) && _.isNumber(message.success) && _.isNumber(message.failed))
   }
   browser.runtime.sendMessage({
@@ -119,7 +132,10 @@ export function addCheckReposCompleteListener (callback) {
   }
   browser.runtime.onMessage.addListener(message => {
     if (message.type === 'CHECK_REPOS_COMPLETE') {
-      callback(message)
+      if (process.env.DEBUG_MODE) {
+        console.log('Msg Receive: CHECK_REPOS_COMPLETE', message)
+      }
+      return callback(message)
     }
   })
 }
@@ -128,53 +144,132 @@ export function addCheckReposCompleteListener (callback) {
  * @fires CHECK_REPOS_COMPLETE
  */
 export function fireCheckReposComplete () {
+  if (process.env.DEBUG_MODE) {
+    console.log('fire: CHECK_REPOS_COMPLETE')
+  }
   browser.runtime.sendMessage({type: 'CHECK_REPOS_COMPLETE'})
 }
 
 /**
- * @typedef {string} MsgAddRepo - repo name ([owner]/[repo])
- * @property {string} type - 'ADD_REPO'
- * @property {string} name - repo name ([owner]/[repo])
+ * @typedef {string} MsgReplaceRepo
+ * @property {string} type - 'REPLACE_REPO'
+ * @property {module:api/storage~ReleaseData} data - repo data
  */
 
  /**
- * @event ADD_REPO
- * @type {module:api/message~MsgAddRepo}
+ * @event REPLACE_REPO
+ * @type {module:api/message~MsgReplaceRepo}
  */
 
 /**
- * @callback AddRepoRequestCallback
- * @param {string} name - repo name ([owner]/[repo])
+ * @callback ReplaceRepoRequestCallback
+ * @param {module:api/storage~ReleaseData} data - repo data
  */
 
 /**
  * Listens request from other pages
- * @param {module:api/message~AddRepoRequestCallback} callback
- * @listens ADD_REPO
+ * @param {module:api/message~ReplaceRepoRequestCallback} callback
+ * @listens REPLACE_REPO
  */
-export function addAddRepoRequestListener (callback) {
+export function addReplaceRepoRequestListener (callback) {
   if (process.env.DEBUG_MODE) {
     console.assert(_.isFunction(callback))
   }
-  return browser.runtime.onMessage.addListener(message => {
-    if (message.type === 'ADD_REPO') {
+  browser.runtime.onMessage.addListener(message => {
+    if (message.type === 'REPLACE_REPO') {
       if (process.env.DEBUG_MODE) {
-        console.assert(_.isString(message.name))
+        console.log('Msg Receive: REPLACE_REPO')
       }
-      callback(message.name)
+      callback(message.data)
+      return Promise.resolve()
     }
   })
 }
 
 /**
- * @fires ADD_REPO
+ * @fires REPLACE_REPO
  */
-export function requestAddRepo (name) {
+export function requestReplaceRepo (data) {
   if (process.env.DEBUG_MODE) {
-    console.assert(_.isString(name))
+    console.log('fire: REPLACE_REPO')
+    console.assert(_.isString(data.name))
   }
   return browser.runtime.sendMessage({
-    type: 'ADD_REPO',
-    name,
+    type: 'REPLACE_REPO',
+    data,
   })
+}
+
+/**
+ * @typedef {string} MsgRepoUpdate
+ * @property {string} type - 'REPO_UPDATED'
+ * @property {module:api/storage~ReleaseData} data - repo data
+ */
+
+ /**
+ * @event REPO_UPDATED
+ * @type {module:api/message~MsgRepoUpdate}
+ */
+
+/**
+ * @callback RepoUpdatedMsgCallback
+ * @param {module:api/storage~ReleaseData} data - repo data
+ */
+
+/**
+ * Listens request from other pages
+ * @param {module:api/message~RepoUpdatedMsgCallback} callback
+ * @listens REPO_UPDATED
+ */
+export function addRepoUpdatedMsgtListener (callback) {
+  if (process.env.DEBUG_MODE) {
+    console.assert(_.isFunction(callback))
+  }
+  browser.runtime.onMessage.addListener(message => {
+    if (message.type === 'REPO_UPDATED') {
+      if (process.env.DEBUG_MODE) {
+        console.log('Msg Receive: REPO_UPDATED')
+        console.assert(_.isString(message.data))
+      }
+      callback(message.data)
+      return Promise.resolve()
+    }
+  })
+}
+
+/**
+ * @param {module:api/storage~ReleaseData} data - repo data
+ * @fires REPO_UPDATED
+ */
+export function fireRepoUpdatedMsg (data) {
+  if (process.env.DEBUG_MODE) {
+    console.log('fire: REPO_UPDATED')
+    console.assert(_.isNumber(data.published_at))
+  }
+  return browser.runtime.sendMessage({
+    type: 'REPO_UPDATED',
+    data,
+  })
+}
+
+/**
+ * @listens IS_POPUP_OPEN
+ */
+export function listenPopUpPageOpenQuery () {
+  browser.runtime.onMessage.addListener(message => {
+    if (message.type === 'IS_POPUP_OPEN') {
+      if (process.env.DEBUG_MODE) {
+        console.log('Msg Receive: IS_POPUP_OPEN')
+      }
+      return Promise.resolve(true)
+    }
+  })
+}
+
+/**
+ * @fires IS_POPUP_OPEN
+ */
+export function isPopupPageOpen () {
+  console.log('fire: IS_POPUP_OPEN')
+  return browser.runtime.sendMessage({type: 'IS_POPUP_OPEN'})
 }
