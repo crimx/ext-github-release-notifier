@@ -22,6 +22,7 @@ const webpackConfig = merge(baseWebpackConfig, {
   entry: browsers.reduce((entry, browser) => {
     entry[browser + '/popup'] = './src/popup/main.js'
     entry[browser + '/background'] = './src/background/main.js'
+    entry[browser + '/content'] = './src/content/main.js'
     return entry
   }, {}),
   module: {

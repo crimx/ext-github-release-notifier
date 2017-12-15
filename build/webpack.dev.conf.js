@@ -13,8 +13,9 @@ const PORT = process.env.PORT && Number(process.env.PORT)
 
 const devWebpackConfig = merge(baseWebpackConfig, {
   entry: {
+    fake: './test/dev.fake.js',
+    background: './src/background/main.js',
     popup: './src/popup/main.js',
-    fake: './test/dev.fake.js'
   },
   module: {
     rules: utils.styleLoaders({ sourceMap: config.dev.cssSourceMap, usePostCSS: true })
@@ -54,7 +55,7 @@ const devWebpackConfig = merge(baseWebpackConfig, {
     new HtmlWebpackPlugin({
       filename: 'index.html',
       template: 'index.html',
-      chunks: ['fake', 'popup'],
+      chunks: ['fake', 'background', 'popup'],
       inject: true
     }),
   ]
