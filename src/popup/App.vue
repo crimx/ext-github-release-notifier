@@ -18,7 +18,7 @@
       <transition name="fade">
         <div class="check-progress-bar"
           v-if="scheduleInfo.isChecking"
-          :style="{transform: `translateX(${(repoCheckProgress.success + repoCheckProgress.failed) / repoCheckProgress.total * 100}%)`}"
+          :style="{transform: `translateX(${(repoCheckProgress.success + repoCheckProgress.failed) / repos.length * 100}%)`}"
         ></div>
       </transition>
       <div class="pagehead">
@@ -26,7 +26,7 @@
           <!-- checking status -->
           <span v-if="scheduleInfo.isChecking">
             Checking...
-            {{ repoCheckProgress.success + repoCheckProgress.failed }}/{{ repoCheckProgress.total }}
+            {{ repoCheckProgress.success + repoCheckProgress.failed }}/{{ repos.length }}
           </span>
           <!-- check schedule info -->
           <div v-else>
@@ -60,13 +60,12 @@
             <!-- version tag name & publish date -->
             <a class="text-gray" :href="repo.html_url" target="_blank" rel="noopener">
               <octicon name="tag" flip="horizontal"></octicon>
-              {{ repo.tag_name }}
-              ~
-              {{ moment(repo.published_at).from(currentTime) }}
+              {{ repo.tag_name || 'no release' }}
+              {{ repo.published_at ? `~ ${moment(repo.published_at).from(currentTime)}` : '' }}
             </a>
           </div> <!-- repo info -->
           <!-- assets -->
-          <div class="assets">
+          <div v-if="repo.assets && repo.assets.length > 0" class="assets">
             <!-- uploaded assets -->
             <span v-for="asset in repo.assets.slice(0, 8)" class="tooltipped tooltipped-nw tooltipped-no-delay ml-3" :aria-label="asset.name">
               <a class="asset text-gray" :href="asset.browser_download_url">
@@ -75,12 +74,12 @@
             </span> <!-- uploaded assets -->
             <!-- zipball & rarball -->
             <template v-if="repo.assets.length <= 6">
-              <span class="tooltipped tooltipped-nw tooltipped-no-delay ml-3" aria-label="Source code (zip)">
+              <span v-if="repo.zipball_url" class="tooltipped tooltipped-nw tooltipped-no-delay ml-3" aria-label="Source code (zip)">
                 <a class="asset text-gray-lighter" :href="repo.zipball_url">
                   <octicon name="file-zip" scale="2"></octicon>
                 </a>
               </span>
-              <span class="tooltipped tooltipped-nw tooltipped-no-delay ml-3" aria-label="Source code (tar.gz)">
+              <span v-if="repo.tarball_url" class="tooltipped tooltipped-nw tooltipped-no-delay ml-3" aria-label="Source code (tar.gz)">
                 <a class="asset text-gray-lighter" :href="repo.tarball_url">
                   <octicon name="file-zip" scale="2"></octicon>
                 </a>

@@ -18,7 +18,6 @@ Promise.all([api.getAllReleaseData(), api.getScheduleInfo()])
           repos: allReleaseData.sort((a, b) => b.published_at - a.published_at),
           scheduleInfo,
           repoCheckProgress: {
-            total: 0,
             success: 0,
             failed: 0
           },
@@ -44,12 +43,19 @@ Promise.all([api.getAllReleaseData(), api.getScheduleInfo()])
         })
     })
 
-    api.addRepoCheckListener(message => {
+    api.addCheckReposProgressListener(message => {
       vm.repoCheckProgress = message
     })
 
     api.addScheduleInfoListener(message => {
       vm.scheduleInfo = message
+    })
+
+    api.addCheckReposCompleteListener(() => {
+      api.getAllReleaseData()
+        .then(allReleaseData => {
+          vm.repos = allReleaseData.sort((a, b) => b.published_at - a.published_at)
+        })
     })
 
     window.addEventListener('online', () => { vm.isOnline = true }, false)

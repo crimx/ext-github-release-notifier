@@ -38,7 +38,7 @@ window.chrome = {
  * fake storage
  */
 
-const initRepos = Array.from(Array(randInt(8))).map(() => `${faker.name.firstName()}/${faker.random.word()}`)
+const initRepos = Array.from(Array(randInt(20))).map(() => `${faker.name.firstName()}/${faker.random.word()}`)
 
 const storage = {
   local: _.zipObject(initRepos, _.map(initRepos, name => {
@@ -86,7 +86,7 @@ chrome.storage.sync.get = (keys, callback) => {
 
 chrome.storage.local.set = (items, callback = _.noop) => {
   console.assert(_.isObject(items))
-  const oldLocal = storage.local
+  const oldLocal = _.cloneDeep(storage.local)
   storage.local = _.assign({}, storage.local, _.cloneDeep(items))
   const changed = _.flow([
     _.cloneDeep,
@@ -100,7 +100,7 @@ chrome.storage.local.set = (items, callback = _.noop) => {
 
 chrome.storage.sync.set = (items, callback = _.noop) => {
   console.assert(_.isObject(items))
-  const oldSync = storage.sync
+  const oldSync = _.cloneDeep(storage.sync)
   storage.sync = _.assign({}, storage.sync, _.cloneDeep(items))
   const changed = _.flow([
     _.cloneDeep,
@@ -166,6 +166,15 @@ fetchMock.mock({
       if (headers.etag && Math.random() > 0.3) {
         return resolve({body: '', status: 304})
       }
+      if (Math.random() > 0.8) {
+        return resolve({
+          body: {
+            'message': 'Not Found',
+            'documentation_url': 'https://developer.github.com/v3/repos/releases/#get-the-latest-release'
+          },
+          status: 404,
+        })
+      }
       if (Math.random() > 0.9) {
         return reject(new Error('net work error'))
       }
@@ -202,7 +211,8 @@ fetchMock.mock({
             })
           }
         })
-      }, randInt(5000))
+      // }, randInt(5000))
+      }, 3000)
     })
   }
 })
