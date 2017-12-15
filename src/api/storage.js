@@ -153,6 +153,7 @@ export function getAllRepos () {
 export function replaceRepo ({name, watching}) {
   if (!watching) {
     return Promise.all([removeRepo(name), removeRepoNames(name)])
+      .then(_.noop)
   }
 
   return getRepoNames()
