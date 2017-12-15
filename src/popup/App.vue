@@ -44,7 +44,7 @@
     </div>
     <transition name="out-in-fade" mode="out-in">
       <main class="main-container" v-if="repos.length > 0">
-        <div class="repo-item" v-for="repo in repos">
+        <div class="repo-item" v-for="repo in repos" key="repo.name">
           <!-- author avatar -->
           <a class=" mt-2 mr-2" :href="repo.author_url" target="_blank" rel="noopener">
             <img class="avatar" :src="repo.avatar_url" width="48" height="48" :alt="`Avatar of ${repo.name}`">
@@ -65,7 +65,7 @@
             </a>
           </div> <!-- repo info -->
           <!-- assets -->
-          <div v-if="repo.assets && repo.assets.length > 0" class="assets">
+          <div class="assets">
             <!-- uploaded assets -->
             <span v-for="asset in repo.assets.slice(0, 8)" class="tooltipped tooltipped-nw tooltipped-no-delay ml-3" :aria-label="asset.name">
               <a class="asset text-gray" :href="asset.browser_download_url">
@@ -112,7 +112,7 @@
 
 <script>
 import moment from 'moment'
-import { requestCheckRepos } from '@/api'
+import { requestCheckRepos } from '@/api/message'
 import Octicon from 'vue-octicon/components/Octicon.vue'
 import 'vue-octicon/icons'
 
@@ -207,6 +207,11 @@ export default {
 /*------------------------------------*\
   #base
 \*------------------------------------*/
+html {
+  width: 700px;
+  min-height: 600px;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
   font-size: 14px;
@@ -225,6 +230,8 @@ body {
 %container {
   max-width: 980px;
   margin: 0 auto;
+  padding-left: 16px;
+  padding-right: 16px;
 }
 
 .header-wrap {
@@ -305,8 +312,6 @@ body {
 
 .main-container {
   @extend %container;
-  padding-left: 16px;
-  padding-right: 16px;
 }
 
 .repo-item {
