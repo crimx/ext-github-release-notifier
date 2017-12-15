@@ -8,7 +8,9 @@
             Check Now
           </button>
           <input class="btn-filter form-control input-sm" type="text" placeholder="Filter">
-          <a href="#" class="text-white text-bold no-underline" title="sign in">Sign in</a>
+          <span class="tooltipped tooltipped-sw tooltipped-no-delay" aria-label="Sign in to increase request rate limit">
+            <a href="#" class="text-white text-bold no-underline">Sign in</a>
+          </span>
         </div>
       </div>
     </header>
