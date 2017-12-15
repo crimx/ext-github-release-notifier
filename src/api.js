@@ -28,52 +28,6 @@ import { getFileIcon } from '@/popup/file-type-icons'
  */
 
 /**
- * For popup page
- * @type {object}
- * @property {module:API~getRepoNames} getRepoNames
- * @property {module:API~getReleaseData} getReleaseData
- * @property {module:API~getAllReleaseData} getAllReleaseData
- * @property {module:API~getScheduleInfo} getScheduleInfo
- * @property {module:API~requestCheckRepos} requestCheckRepos
- * @property {module:API~addRepoNamesListener} addRepoNamesListener
- * @property {module:API~addScheduleInfoListener} addScheduleInfoListener
- * @property {module:API~addCheckReposProgressListener} addCheckReposProgressListener
- * @property {module:API~addCheckReposCompleteListener} addCheckReposCompleteListener
- */
-export const client = {
-  getRepoNames,
-  getReleaseData,
-  getAllReleaseData,
-  getScheduleInfo,
-  requestCheckRepos,
-  addRepoNamesListener,
-  addScheduleInfoListener,
-  addCheckReposProgressListener,
-  addCheckReposCompleteListener
-}
-
-/**
- * For background page
- * @type {object}
- * @property {module:API~getRepoNames} getRepoNames
- * @property {module:API~getReleaseData} getReleaseData
- * @property {module:API~getScheduleInfo} getScheduleInfo
- * @property {module:API~saveRepoNames} saveRepoNames
- * @property {module:API~saveScheduleInfo} saveScheduleInfo
- * @property {module:API~checkRepos} checkRepos
- * @property {module:API~ListenCheckReposRequest} ListenCheckReposRequest
- */
-export const server = {
-  getRepoNames,
-  getReleaseData,
-  getScheduleInfo,
-  saveRepoNames,
-  saveScheduleInfo,
-  checkRepos,
-  ListenCheckReposRequest,
-}
-
-/**
  * @callback RepoNamesChangedCallback
  * @param {string[]} names
  */
@@ -185,7 +139,7 @@ export function fetchReleaseData (releaseData) {
           avatar_url: releaseData.avatar_url || 'data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==', // gray
           author_url: releaseData.author_url || 'https://github.com/' + releaseData.name.split('/')[0],
           html_url: releaseData.html_url || 'https://github.com/' + releaseData.name,
-          published_at: NaN,
+          published_at: 0, // for sorting
           tag_name: '',
           zipball_url: '',
           tarball_url: '',
@@ -193,7 +147,7 @@ export function fetchReleaseData (releaseData) {
         }
       }
       if (!response.ok) {
-        return Promise.reject(new Error(`Network error with ${releaseData.name}`))
+        return Promise.reject(new Error())
       }
       return response.json()
         .then(json => ({
@@ -215,6 +169,7 @@ export function fetchReleaseData (releaseData) {
           }))
         }))
     })
+    .catch(() => Promise.reject(new Error(`Failed to check repo: ${releaseData.name}`)))
 }
 
 /**
@@ -256,7 +211,7 @@ export function addCheckReposCompleteListener (callback) {
  * Listens request from other pages and perform check repos
  * @listens REQ_CHECK_REPOS
  */
-export function ListenCheckReposRequest () {
+export function listenCheckReposRequest () {
   browser.runtime.onMessage.addListener(message => {
     if (message.type === 'REQ_CHECK_REPOS') {
       return checkRepos()
@@ -359,7 +314,8 @@ function _fetchReleaseDataInChunks () {
                   failed,
                 })
               })
-              .catch(() => {
+              .catch(err => {
+                console.warn(err.message || err.toString())
                 failed += 1
                 browser.runtime.sendMessage({
                   type: 'REPO_CHECK_UPDATED',
