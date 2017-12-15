@@ -207,12 +207,8 @@ export default {
 /*------------------------------------*\
   #base
 \*------------------------------------*/
-html {
-  width: 700px;
-  min-height: 600px;
-}
-
 body {
+  min-height: 600px;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
   font-size: 14px;
   line-height: 1.5;
@@ -228,7 +224,7 @@ body {
   #components
 \*------------------------------------*/
 %container {
-  max-width: 980px;
+  width: 700px;
   margin: 0 auto;
   padding-left: 16px;
   padding-right: 16px;
@@ -335,6 +331,12 @@ body {
 /*------------------------------------*\
   #states
 \*------------------------------------*/
+@media (min-width: 1000px) {
+  .main-contanier {
+    width: 980px;
+  }
+}
+
 .text-gray-lighter {
   color: #b5b5b5 !important;
 }
