@@ -1,7 +1,18 @@
 import Vue from 'vue'
 import App from './App'
 
-import { client as api } from '@/api'
+import {
+  addCheckReposProgressListener,
+  addCheckReposCompleteListener,
+  listenPopUpPageOpenQuery,
+} from '@/api/message'
+
+import {
+  getAllRepos,
+  getScheduleInfo,
+  addScheduleInfoListener,
+  addRepoNamesListener,
+} from '@/api/storage'
 
 if (process.env.DEBUG_MODE) {
   console.log('DEBUG_MODE enabled')
@@ -9,7 +20,7 @@ if (process.env.DEBUG_MODE) {
 
 Vue.config.productionTip = false
 
-Promise.all([api.getAllReleaseData(), api.getScheduleInfo()])
+Promise.all([getAllRepos(), getScheduleInfo()])
   .then(([allReleaseData, scheduleInfo]) => {
     const vm = new Vue({
       el: '#app',
@@ -36,23 +47,26 @@ Promise.all([api.getAllReleaseData(), api.getScheduleInfo()])
       },
     })
 
-    api.addRepoNamesListener(() => {
-      api.getAllReleaseData()
+    listenPopUpPageOpenQuery()
+
+    addRepoNamesListener(() => {
+      getAllRepos()
         .then(allReleaseData => {
           vm.repos = allReleaseData.sort((a, b) => b.published_at - a.published_at)
         })
     })
 
-    api.addCheckReposProgressListener(message => {
+    addCheckReposProgressListener(message => {
       vm.repoCheckProgress = message
     })
 
-    api.addScheduleInfoListener(message => {
+    addScheduleInfoListener(message => {
       vm.scheduleInfo = message
     })
 
-    api.addCheckReposCompleteListener(() => {
-      api.getAllReleaseData()
+    addCheckReposCompleteListener(() => {
+      // return promise to close port
+      return getAllRepos()
         .then(allReleaseData => {
           vm.repos = allReleaseData.sort((a, b) => b.published_at - a.published_at)
         })
