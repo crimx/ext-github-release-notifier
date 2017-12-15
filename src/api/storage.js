@@ -1,11 +1,15 @@
 /**
- * api for repos
- * @module API
+ * Higher level api for repos
+ * @module api/storage
  */
 
 import browser from 'webextension-polyfill'
 import _ from 'lodash'
 import { getFileIcon } from '@/popup/file-type-icons'
+import {
+  fireCheckReposProgress,
+  fireCheckReposComplete,
+} from './message'
 
 /**
  * Release data, for generating Map
@@ -34,12 +38,14 @@ import { getFileIcon } from '@/popup/file-type-icons'
 
 /**
  * Listens sync storage change
- * @param {module:API~RepoNamesChangedCallback} callback
+ * @param {module:api/storage~RepoNamesChangedCallback} callback
  * @listens browser.storage.onChanged
  */
 export function addRepoNamesListener (callback) {
-  if (!_.isFunction(callback)) {
-    throw new TypeError('arg 1 should be a function.')
+  if (process.env.DEBUG_MODE) {
+    if (!_.isFunction(callback)) {
+      throw new TypeError('arg 1 should be a function.')
+    }
   }
   browser.storage.onChanged.addListener((changes, areaName) => {
     if (areaName === 'sync' && changes.repos) {
@@ -71,19 +77,39 @@ export function getRepoNames () {
 }
 
 /**
+ * Fetch repo release data, sava it and update repo names
+ * @param {string} name - [owner]/[repo]
+ * @returns {Promise>} A Promise fulfilled with the repo's releaseData if succeeded.
+ */
+export function addRepo (name) {
+  return getRepoNames()
+    .then(repos => {
+      if (_.find(repos, repo => repo.name === name)) { return }
+      return fetchReleaseData({name})
+        .then(saveReleaseData)
+        // Trigger popup page update
+        .then(releaseData => {
+          saveRepoNames(repos.concat([name]))
+          return releaseData
+        })
+    })
+}
+
+/**
  * Save release data to local storage
  * @fires browser.storage.onChanged
- * @param {module:API~ReleaseData} releaseData
- * @returns {Promise} A Promise fulfilled with no argument if succeeded.
+ * @param {module:api/storage~ReleaseData} releaseData
+ * @returns {Promise} A Promise fulfilled with the same releaseData if succeeded.
  */
 export function saveReleaseData (releaseData) {
   return browser.storage.local.set({[releaseData.name]: releaseData})
+    .then(_.constant(releaseData))
 }
 
 /**
  * Get release info of a repo
  * @param {string} name - repo name
- * @returns {Promise<module:API~ReleaseData>} A Promise fulfilled with ReleaseData object if succeeded.
+ * @returns {Promise<module:api/storage~ReleaseData>} A Promise fulfilled with ReleaseData object if succeeded.
  */
 export function getReleaseData (name) {
   return browser.storage.local.get(name)
@@ -92,13 +118,13 @@ export function getReleaseData (name) {
         return response[name]
       }
       return fetchReleaseData({name})
-        .then(_.partial(_.tap, _, saveReleaseData))
+        .then(saveReleaseData)
     })
 }
 
 /**
  * Get release info of all repos
- * @returns {Promise<module:API~ReleaseData[]>} A Promise fulfilled with array of ReleaseData objects if succeeded.
+ * @returns {Promise<module:api/storage~ReleaseData[]>} A Promise fulfilled with array of ReleaseData objects if succeeded.
  */
 export function getAllReleaseData () {
   return getRepoNames()
@@ -108,8 +134,8 @@ export function getAllReleaseData () {
 /**
  * Fetch release info from github
  * @todo oauth token
- * @param {module:API~ReleaseData} releaseData - only name is mandatory
- * @returns {Promise<module:API~ReleaseData>} A Promise fulfilled with ReleaseData object if succeeded.
+ * @param {module:api/storage~ReleaseData} releaseData - only name is mandatory
+ * @returns {Promise<module:api/storage~ReleaseData>} A Promise fulfilled with ReleaseData object if succeeded.
  */
 export function fetchReleaseData (releaseData) {
   const headers = new Headers({
@@ -173,109 +199,16 @@ export function fetchReleaseData (releaseData) {
 }
 
 /**
- * @typedef {object} MsgCHECK_REPOS_COMPLETE
- * @property {string} type - 'CHECK_REPOS_COMPLETE'
- */
-
-/**
- * @event CHECK_REPOS_COMPLETE
- * @type {MsgCHECK_REPOS_COMPLETE}
- */
-
-/**
- * Listens repo check complete
- * @listens CHECK_REPOS_COMPLETE
- */
-export function addCheckReposCompleteListener (callback) {
-  if (!_.isFunction(callback)) {
-    throw new TypeError('arg 1 should be a function.')
-  }
-  browser.runtime.onMessage.addListener(message => {
-    if (message.type === 'CHECK_REPOS_COMPLETE') {
-      callback(message)
-    }
-  })
-}
-
-/**
- * @typedef {object} MsgREQ_CHECK_REPOS
- * @property {string} type - 'REQ_CHECK_REPOS'
- */
-
-/**
- * @event REQ_CHECK_REPOS
- * @type {MsgREQ_CHECK_REPOS}
- */
-
-/**
- * Listens request from other pages and perform check repos
- * @listens REQ_CHECK_REPOS
- */
-export function listenCheckReposRequest () {
-  browser.runtime.onMessage.addListener(message => {
-    if (message.type === 'REQ_CHECK_REPOS') {
-      return checkRepos()
-    }
-  })
-}
-
-/**
- * Request background page to check repos
- * @fires REQ_CHECK_REPOS
- * @returns {Promise<boolean>} A Promise fulfilled with no argument.
- */
-export function requestCheckRepos () {
-  return browser.runtime.sendMessage({type: 'REQ_CHECK_REPOS'})
-}
-
-/**
- * @typedef {object} MsgRepoUpdate
- * @property {string} type - 'REPO_CHECK_UPDATED'
- * @property {number} total - total repo count
- * @property {number} success - success count
- * @property {number} failed - failed count
- */
-
-/**
- * @event REPO_CHECK_UPDATED
- * @type {module:API~MsgRepoUpdate}
- */
-
-/**
- * @callback RepoCheckCallback
- * @param {module:API~MsgRepoUpdate} message
- */
-
-/**
- * @param {module:API~RepoCheckCallback} callback
- * @listens REPO_CHECK_UPDATED
- */
-export function addCheckReposProgressListener (callback) {
-  if (!_.isFunction(callback)) {
-    throw new TypeError('arg 1 should be a function.')
-  }
-  browser.runtime.onMessage.addListener(message => {
-    if (message.type === 'REPO_CHECK_UPDATED') {
-      callback(message)
-    }
-  })
-}
-
-/**
  * Check for repo update and save data
  * @fires browser.storage.onChanged
  * @fires REPO_CHECK_UPDATED
  * @fires CHECK_REPOS_COMPLETE
- * @returns {Promise<module:API~ReleaseData>} A Promise fulfilled with no argument if succeeded.
+ * @returns {Promise<module:api/storage~ReleaseData>} A Promise fulfilled with no argument if succeeded.
  */
 export function checkRepos () {
   return getScheduleInfo()
   .then(info => {
-    browser.runtime.sendMessage({
-      type: 'REPO_CHECK_UPDATED',
-      success: 0,
-      failed: 0,
-    })
+    fireCheckReposProgress({success: 0, failed: 0})
     info.isChecking = true
     return saveScheduleInfo(info)
   })
@@ -286,14 +219,14 @@ export function checkRepos () {
     info.lastCheck = Date.now()
     return saveScheduleInfo(info)
   })
-  .then(() => browser.runtime.sendMessage({type: 'CHECK_REPOS_COMPLETE'}))
+  .then(fireCheckReposComplete)
 }
 
 /**
  * Check for repo update and save data
  * @fires browser.storage.onChanged
  * @fires REPO_CHECK_UPDATED
- * @returns {Promise<module:API~ReleaseData>} A Promise fulfilled with no argument if succeeded.
+ * @returns {Promise<module:api/storage~ReleaseData>} A Promise fulfilled with no argument if succeeded.
  */
 function _fetchReleaseDataInChunks () {
   return getAllReleaseData()
@@ -308,20 +241,12 @@ function _fetchReleaseDataInChunks () {
               .then(newData => {
                 success += 1
                 saveReleaseData(newData)
-                browser.runtime.sendMessage({
-                  type: 'REPO_CHECK_UPDATED',
-                  success,
-                  failed,
-                })
+                fireCheckReposProgress({success, failed})
               })
               .catch(err => {
                 console.warn(err.message || err.toString())
                 failed += 1
-                browser.runtime.sendMessage({
-                  type: 'REPO_CHECK_UPDATED',
-                  success,
-                  failed,
-                })
+                fireCheckReposProgress({success, failed})
               })
           })
         )
@@ -339,16 +264,18 @@ function _fetchReleaseDataInChunks () {
 
 /**
  * @callback ScheduleInfoChangedCallback
- * @param {module:API~ScheduleInfo} scheduleInfo
+ * @param {module:api/storage~ScheduleInfo} scheduleInfo
  */
 
  /**
-  * @param {module:API~ScheduleInfoChangedCallback} callback
+  * @param {module:api/storage~ScheduleInfoChangedCallback} callback
   * @listens browser.storage.onChanged
   */
 export function addScheduleInfoListener (callback) {
-  if (!_.isFunction(callback)) {
-    throw new TypeError('arg 1 should be a function.')
+  if (process.env.DEBUG_MODE) {
+    if (!_.isFunction(callback)) {
+      throw new TypeError('arg 1 should be a function.')
+    }
   }
   browser.storage.onChanged.addListener((changes, areaName) => {
     if (areaName === 'local' && changes.scheduleInfo) {
@@ -359,7 +286,7 @@ export function addScheduleInfoListener (callback) {
 
 /**
  * @fires browser.storage.onChanged
- * @param {module:API~ScheduleInfo} scheduleInfo
+ * @param {module:api/storage~ScheduleInfo} scheduleInfo
  * @returns {Promise} A Promise fulfilled with no argument if succeeded.
  */
 export function saveScheduleInfo (scheduleInfo) {
@@ -376,7 +303,7 @@ export function saveScheduleInfo (scheduleInfo) {
 }
 
 /**
- * @returns {Promise<module:API~ScheduleInfo>}
+ * @returns {Promise<module:api/storage~ScheduleInfo>}
  */
 export function getScheduleInfo () {
   return browser.storage.local.get('scheduleInfo')
