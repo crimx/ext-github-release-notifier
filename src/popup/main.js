@@ -21,7 +21,8 @@ Promise.all([api.getAllReleaseData(), api.getScheduleInfo()])
             total: 0,
             success: 0,
             failed: 0
-          }
+          },
+          isOnline: navigator.onLine
         }
       },
       render (createElement) {
@@ -29,7 +30,8 @@ Promise.all([api.getAllReleaseData(), api.getScheduleInfo()])
           props: {
             repos: this.repos,
             scheduleInfo: this.scheduleInfo,
-            repoCheckProgress: this.repoCheckProgress
+            repoCheckProgress: this.repoCheckProgress,
+            isOnline: this.isOnline
           }
         })
       },
@@ -49,4 +51,7 @@ Promise.all([api.getAllReleaseData(), api.getScheduleInfo()])
     api.addScheduleInfoListener(message => {
       vm.scheduleInfo = message
     })
+
+    window.addEventListener('online', () => { vm.isOnline = true }, false)
+    window.addEventListener('offline', () => { vm.isOnline = false }, false)
   })

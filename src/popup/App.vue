@@ -3,7 +3,7 @@
     <header class="header-wrap">
       <div class="header">
         <div class="header-aside">
-          <button class="btn btn-sm" type="button" :disabled="scheduleInfo.isChecking" @click="requestCheckRepos">
+          <button class="btn btn-sm" type="button" :disabled="!isOnline || scheduleInfo.isChecking" @click="requestCheckRepos">
             <octicon :name="scheduleInfo.isChecking ? 'sync' : 'zap'" :spin="scheduleInfo.isChecking"></octicon>
             Check Now
           </button>
@@ -32,6 +32,12 @@
             <span><octicon name="clock"></octicon> Next check: {{ nextCheck }}</span>
           </div>
         </transition>
+      </div>
+    </div>
+    <div class="main-container" v-if="!isOnline">
+      <div class="flash flash-warn text-center mt-3">
+        <octicon name="alert"></octicon>
+        You are currently offline.
       </div>
     </div>
     <transition name="out-in-fade" mode="out-in">
@@ -111,7 +117,7 @@ import 'vue-octicon/icons'
 
 export default {
   name: 'app',
-  props: ['repos', 'scheduleInfo', 'repoCheckProgress'],
+  props: ['repos', 'scheduleInfo', 'repoCheckProgress', 'isOnline'],
   data () {
     return {
       currentTime: Date.now(),
@@ -138,7 +144,11 @@ export default {
   },
   methods: {
     moment,
-    requestCheckRepos
+    requestCheckRepos () {
+      if (this.isOnline && !this.scheduleInfo.isChecking) {
+        requestCheckRepos()
+      }
+    }
   },
   created () {
     setInterval(() => {
@@ -294,6 +304,8 @@ body {
 
 .main-container {
   @extend %container;
+  padding-left: 16px;
+  padding-right: 16px;
 }
 
 .repo-item {
