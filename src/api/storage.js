@@ -294,9 +294,9 @@ function _fetchReleaseDataInChunks () {
               .then(newData => {
                 success += 1
                 saveRepo(newData)
-                if (newData.etag !== repoData.etag) {
+                if (newData.tag_name !== repoData.tag_name) {
                   // new release
-                  fireRepoUpdatedMsg(newData)
+                  fireRepoUpdatedMsg({newData, oldData: repoData})
                 }
                 fireCheckReposProgress({success, failed})
               })

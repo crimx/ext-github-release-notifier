@@ -200,15 +200,8 @@ export function requestReplaceRepo (data) {
   })
 }
 
-/**
- * @typedef {string} MsgRepoUpdate
- * @property {string} type - 'REPO_UPDATED'
- * @property {module:api/storage~ReleaseData} data - repo data
- */
-
  /**
  * @event REPO_UPDATED
- * @type {module:api/message~MsgRepoUpdate}
  */
 
 /**
@@ -225,16 +218,11 @@ export function addRepoUpdatedMsgtListener (callback) {
   if (process.env.DEBUG_MODE) {
     console.assert(_.isFunction(callback))
   }
-  browser.runtime.onMessage.addListener(message => {
-    if (message.type === 'REPO_UPDATED') {
-      if (process.env.DEBUG_MODE) {
-        console.log('Msg Receive: REPO_UPDATED')
-        console.assert(_.isString(message.data))
-      }
-      callback(message.data)
-      return Promise.resolve()
-    }
-  })
+  if (!window.channelRepoUpdated) {
+    window.channelRepoUpdated = [callback]
+  } else {
+    window.channelRepoUpdated.push(callback)
+  }
 }
 
 /**
@@ -246,10 +234,13 @@ export function fireRepoUpdatedMsg (data) {
     console.log('fire: REPO_UPDATED')
     console.assert(_.isNumber(data.published_at))
   }
-  return browser.runtime.sendMessage({
-    type: 'REPO_UPDATED',
-    data,
-  })
+  if (!window.channelRepoUpdated) {
+    window.channelRepoUpdated = []
+  } else {
+    window.channelRepoUpdated.forEach(callback => {
+      callback(data)
+    })
+  }
 }
 
 /**

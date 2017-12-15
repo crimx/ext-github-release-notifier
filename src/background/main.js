@@ -1,4 +1,5 @@
 import browser from 'webextension-polyfill'
+import semver from 'semver'
 
 import {
   isPopupPageOpen,
@@ -18,6 +19,14 @@ if (process.env.DEBUG_MODE) {
   window.browser = browser
 }
 
+browser.notifications.onClicked.addListener(name => {
+  if (/^[^/\s]+\/[^/\s]+$/.test(name)) {
+    // is a repo
+    browser.tabs.create({ url: 'https://github.com/' + name })
+    browser.notifications.clear(name)
+  }
+})
+
 addReplaceRepoRequestListener(message => {
   replaceRepo(message)
     .then(releaseData => {
@@ -29,6 +38,7 @@ addReplaceRepoRequestListener(message => {
           title: 'Github Release Notifier',
           message: `Start watching ${releaseData.name} for releases`,
           iconUrl: browser.runtime.getURL('icon-128.png'),
+          eventTime: Date.now() + 5000,
         }
       )
     })
@@ -38,18 +48,32 @@ addCheckReposRequestListener(() => {
   checkRepos().then(setCheckReposAlarm)
 })
 
-addRepoUpdatedMsgtListener(repoData => {
+addRepoUpdatedMsgtListener(({newData, oldData}) => {
+  if (!newData.watching || !newData.tag_name) { return }
+  if (oldData.tag_name) {
+    if (newData.watching === 'major') {
+      if (semver.major(newData.tag_name) === semver.major(oldData.tag_name)) { return }
+    } else if (newData.watching === 'minor') {
+      if (semver.major(newData.tag_name) === semver.major(oldData.tag_name) &&
+          semver.minor(newData.tag_name) === semver.minor(oldData.tag_name)
+      ) { return }
+    } else if (newData.watching === 'all') {
+      if (semver.clean(newData.tag_name) === semver.clean(oldData.tag_name)) { return }
+    }
+  }
   isPopupPageOpen()
+    .catch(() => false)
     .then(result => {
       // ignore if popup page is open
       if (result) { return }
       browser.notifications.create(
-        repoData.name, // id
+        newData.name, // id
         {
           type: 'basic', // Firefox currently only support basic
           title: 'Github Release Notifier',
-          message: `${repoData.name} has just updated to ${repoData.tag_name}.`,
+          message: `${newData.name} has just updated to ${newData.tag_name}.`,
           iconUrl: browser.runtime.getURL('icon-128.png'),
+          eventTime: Date.now() + 5000,
         }
       )
     })
