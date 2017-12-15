@@ -7,6 +7,7 @@ import browser from 'webextension-polyfill'
 import _ from 'lodash'
 import { getFileIcon } from '@/popup/file-type-icons'
 import {
+  fireRepoUpdatedMsg,
   fireCheckReposProgress,
   fireCheckReposComplete,
 } from './message'
@@ -16,6 +17,7 @@ import {
  * @see {@link https://developer.github.com/v3/repos/releases/}
  * @typedef {object} ReleaseData
  * @property {string} name - repo name [owner]/[repo]
+ * @property {string} watching - 'major', 'minor', 'all' or ''
  * @property {string} etag
  * @property {string} last_modified, RFC 2822 string
  * @property {string} avatar_url - author avatar
@@ -57,12 +59,16 @@ export function addRepoNamesListener (callback) {
 /**
  * This is synced by browser.
  * @fires browser.storage.onChanged
- * @param {string[]} names - array of repo names. [owner]/[repo]
+ * @param {string[]|string} names - string of one name or array of repo names. [owner]/[repo]
  * @returns {Promise} A Promise fulfilled with no argument if succeeded.
  */
 export function saveRepoNames (names) {
   if (process.env.DEBUG_MODE) {
-    console.assert(_.every(names, _.isString))
+    console.assert(_.isString(names) || _.every(names, _.isString))
+  }
+  if (_.isString(names)) {
+    return getRepoNames()
+      .then(repos => browser.storage.sync.set({repos: repos.concat([names])}))
   }
   return browser.storage.sync.set({repos: names})
 }
@@ -77,22 +83,13 @@ export function getRepoNames () {
 }
 
 /**
- * Fetch repo release data, sava it and update repo names
- * @param {string} name - [owner]/[repo]
- * @returns {Promise>} A Promise fulfilled with the repo's releaseData if succeeded.
+ * Remove a repo from name list
+ * @returns {Promise<string>} A Promise fulfilled with no argument if succeeded.
  */
-export function addRepo (name) {
+export function removeRepoNames (name) {
   return getRepoNames()
-    .then(repos => {
-      if (_.find(repos, repo => repo.name === name)) { return }
-      return fetchReleaseData({name})
-        .then(saveReleaseData)
-        // Trigger popup page update
-        .then(releaseData => {
-          saveRepoNames(repos.concat([name]))
-          return releaseData
-        })
-    })
+    .then(names => names.filter(n => n !== name))
+    .then(saveRepoNames)
 }
 
 /**
@@ -101,7 +98,7 @@ export function addRepo (name) {
  * @param {module:api/storage~ReleaseData} releaseData
  * @returns {Promise} A Promise fulfilled with the same releaseData if succeeded.
  */
-export function saveReleaseData (releaseData) {
+export function saveRepo (releaseData) {
   return browser.storage.local.set({[releaseData.name]: releaseData})
     .then(_.constant(releaseData))
 }
@@ -109,26 +106,70 @@ export function saveReleaseData (releaseData) {
 /**
  * Get release info of a repo
  * @param {string} name - repo name
- * @returns {Promise<module:api/storage~ReleaseData>} A Promise fulfilled with ReleaseData object if succeeded.
+ * @returns {Promise<module:api/storage~ReleaseData|null>} A Promise fulfilled with ReleaseData object or null.
  */
-export function getReleaseData (name) {
+export function getRepo (name) {
   return browser.storage.local.get(name)
     .then(response => {
       if (response[name]) {
         return response[name]
       }
-      return fetchReleaseData({name})
-        .then(saveReleaseData)
+      return null
     })
+}
+
+/**
+ * Delete a repo's data
+ * @fires browser.storage.onChanged
+ * @param {string} name - repo name
+ * @returns {Promise} A Promise fulfilled with the no argument if succeeded.
+ */
+export function removeRepo (name) {
+  return browser.storage.local.remove(name)
 }
 
 /**
  * Get release info of all repos
  * @returns {Promise<module:api/storage~ReleaseData[]>} A Promise fulfilled with array of ReleaseData objects if succeeded.
  */
-export function getAllReleaseData () {
+export function getAllRepos () {
   return getRepoNames()
-    .then(names => Promise.all(names.map(getReleaseData)))
+    .then(names => Promise.all(
+      names.map(
+        name => getRepo(name)
+          .then(data => data ||
+            fetchReleaseData({name})
+              .then(saveRepo)
+          )
+      )
+    ))
+}
+
+/**
+ * Fetch repo release data, sava it and update repo names
+ * @param {string} name - [owner]/[repo]
+ * @returns {Promise>} A Promise fulfilled with the repo's releaseData if succeeded.
+ */
+export function replaceRepo ({name, watching}) {
+  if (!watching) {
+    return Promise.all([removeRepo(name), removeRepoNames(name)])
+  }
+
+  return getRepoNames()
+    .then(repos => {
+      const existRepo = _.find(repos, repo => repo.name === name)
+      if (existRepo) {
+        existRepo.watching = watching
+        return existRepo
+      }
+      return fetchReleaseData({name, watching})
+    })
+    .then(saveRepo)
+    // Trigger popup page update
+    .then(releaseData => {
+      saveRepoNames(name)
+      return releaseData
+    })
 }
 
 /**
@@ -150,6 +191,9 @@ export function fetchReleaseData (releaseData) {
 
   return fetch(`https://api.github.com/repos/${releaseData.name}/releases/latest`, {headers})
     .then(response => {
+      if (process.env.DEBUG_MODE) {
+        console.log(`Server response ${response.status} for ${releaseData.name}`)
+      }
       if (response.status === 304) {
         // 304 Not Modified
         return releaseData
@@ -160,8 +204,9 @@ export function fetchReleaseData (releaseData) {
         // Or repo has been deleted
         return {
           name: releaseData.name,
-          etag: '',
-          last_modified: '',
+          watching: releaseData.watching,
+          etag: response.headers.get('etag') || '',
+          last_modified: response.headers.get('last-modified') || '',
           avatar_url: releaseData.avatar_url || 'data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==', // gray
           author_url: releaseData.author_url || 'https://github.com/' + releaseData.name.split('/')[0],
           html_url: releaseData.html_url || 'https://github.com/' + releaseData.name,
@@ -178,6 +223,7 @@ export function fetchReleaseData (releaseData) {
       return response.json()
         .then(json => ({
           name: releaseData.name,
+          watching: releaseData.watching,
           etag: response.headers.get('etag') || '',
           last_modified: response.headers.get('last-modified') || '',
           avatar_url: json.author.avatar_url,
@@ -206,6 +252,12 @@ export function fetchReleaseData (releaseData) {
  * @returns {Promise<module:api/storage~ReleaseData>} A Promise fulfilled with no argument if succeeded.
  */
 export function checkRepos () {
+  if (!navigator.onLine) {
+    if (process.env.DEBUG_MODE) {
+      console.log('Check repo: offline')
+    }
+    return
+  }
   return getScheduleInfo()
   .then(info => {
     fireCheckReposProgress({success: 0, failed: 0})
@@ -229,7 +281,7 @@ export function checkRepos () {
  * @returns {Promise<module:api/storage~ReleaseData>} A Promise fulfilled with no argument if succeeded.
  */
 function _fetchReleaseDataInChunks () {
-  return getAllReleaseData()
+  return getAllRepos()
     .then(repos => {
       let success = 0
       let failed = 0
@@ -240,7 +292,11 @@ function _fetchReleaseDataInChunks () {
             return fetchReleaseData(repoData)
               .then(newData => {
                 success += 1
-                saveReleaseData(newData)
+                saveRepo(newData)
+                if (newData.etag !== repoData.etag) {
+                  // new release
+                  fireRepoUpdatedMsg(newData)
+                }
                 fireCheckReposProgress({success, failed})
               })
               .catch(err => {
@@ -258,6 +314,7 @@ function _fetchReleaseDataInChunks () {
 
 /**
  * @typedef {object} ScheduleInfo
+ * @property {boolean} isChecking
  * @property {number} lastCheck - last check time, Unix Timestamp in milliseconds
  * @property {number} period - check period in minutes, default to 15
  */
