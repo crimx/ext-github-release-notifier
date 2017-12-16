@@ -2,6 +2,13 @@
   <div>
     <header class="header-wrap">
       <div class="header">
+        <button class="btn btn-menu" type="button">
+          <octicon name="three-bars"></octicon>
+        </button>
+        <div>
+          <h1 class="header-title">Github Release Notifier</h1>
+          <small class="header-description">Unofficial "polyfill" for watching Github releases.</small>
+        </div>
         <div class="header-aside">
           <button class="btn btn-sm" type="button" :disabled="!isOnline || scheduleInfo.isChecking" @click="requestCheckRepos">
             <octicon :name="scheduleInfo.isChecking ? 'sync' : 'zap'" :spin="scheduleInfo.isChecking"></octicon>
@@ -231,8 +238,6 @@ body {
 }
 
 .header-wrap {
-  padding-top: 12px;
-  padding-bottom: 12px;
   font-size: 16px;
   color: rgba(255,255,255,0.75);
   background-color: #34495E;
@@ -242,10 +247,42 @@ body {
   @extend %container;
   display: flex;
   justify-content: space-between;
+  align-items: center;
+}
+
+.btn-menu {
+  display: flex;
+  align-items: center;
+  width: 38px;
+  height: 34px;
+  margin-right: 8px;
+  color: rgba(255, 255, 255, 0.525);
+  border: 1px solid rgba(255, 255, 255, 0.525);
+  border-radius: 5px;
+  background: transparent;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.625);
+  }
+}
+
+.header-title {
+  margin-bottom: 4px;
+  font-size: 21px;
+  line-height: 1;
+}
+
+.header-description {
+  display: block;
+  font-size: 12px;
+  line-height: 1;
 }
 
 .header-aside {
   margin-left: auto;
+  padding-top: 12px;
+  padding-bottom: 12px;
 
   & > * {
     margin-left: 14px;
@@ -331,9 +368,10 @@ body {
 /*------------------------------------*\
   #states
 \*------------------------------------*/
-@media (min-width: 1000px) {
-  .main-contanier {
-    width: 980px;
+@media (min-width: 992px) {
+  .header,
+  .pagehead {
+    width: 750px
   }
 }
 
