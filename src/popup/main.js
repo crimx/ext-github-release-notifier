@@ -1,6 +1,8 @@
 import Vue from 'vue'
 import App from './App'
 
+import { clearBadge } from '@/api/badge'
+
 import {
   addCheckReposProgressListener,
   addCheckReposCompleteListener,
@@ -19,6 +21,8 @@ if (process.env.DEBUG_MODE) {
 }
 
 Vue.config.productionTip = false
+
+clearBadge()
 
 Promise.all([getAllRepos(), getScheduleInfo()])
   .then(([allReleaseData, scheduleInfo]) => {

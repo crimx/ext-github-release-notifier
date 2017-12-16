@@ -1,6 +1,8 @@
 import browser from 'webextension-polyfill'
 import semver from 'semver'
 
+import { clearBadge } from '@/api/badge'
+
 import {
   isPopupPageOpen,
   addReplaceRepoRequestListener,
@@ -24,6 +26,7 @@ browser.notifications.onClicked.addListener(name => {
     // is a repo
     browser.tabs.create({ url: 'https://github.com/' + name })
     browser.notifications.clear(name)
+    clearBadge()
   }
 })
 
@@ -45,7 +48,7 @@ addReplaceRepoRequestListener(message => {
 })
 
 addCheckReposRequestListener(() => {
-  checkRepos().then(setCheckReposAlarm)
+  checkRepos().then(setAlarm)
 })
 
 addRepoUpdatedMsgtListener(({newData, oldData}) => {
@@ -83,18 +86,18 @@ browser.alarms.onAlarm.addListener(() => {
   if (process.env.DEBUG_MODE) {
     console.log('Alarm triggered')
   }
-  checkRepos().then(setCheckReposAlarm)
+  checkRepos().then(setAlarm)
 })
 
-setCheckReposAlarm()
+setAlarm()
 
-function setCheckReposAlarm () {
+function setAlarm () {
   return browser.alarms.clearAll()
     .then(getScheduleInfo)
     .then(({lastCheck, period}) => {
       if (lastCheck + period * 60 <= Date.now()) {
         // check now
-        return checkRepos().then(setCheckReposAlarm)
+        return checkRepos().then(setAlarm)
       }
       if (process.env.DEBUG_MODE) {
         console.log(`set alarm: in ${period} miniutes`)

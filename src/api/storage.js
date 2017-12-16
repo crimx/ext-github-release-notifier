@@ -6,6 +6,7 @@
 import browser from 'webextension-polyfill'
 import _ from 'lodash'
 import { getFileIcon } from '@/popup/file-type-icons'
+import { addOneBadgeUnread } from './badge'
 import {
   fireRepoUpdatedMsg,
   fireCheckReposProgress,
@@ -297,6 +298,7 @@ function _fetchReleaseDataInChunks () {
                 if (newData.tag_name !== repoData.tag_name) {
                   // new release
                   fireRepoUpdatedMsg({newData, oldData: repoData})
+                  addOneBadgeUnread()
                 }
                 fireCheckReposProgress({success, failed})
               })
