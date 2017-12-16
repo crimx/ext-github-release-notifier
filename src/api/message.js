@@ -53,6 +53,7 @@ export function requestCheckRepos () {
     console.log('fire: REQ_CHECK_REPOS')
   }
   return browser.runtime.sendMessage({type: 'REQ_CHECK_REPOS'})
+    .catch(logErrorOnDebug)
 }
 
 /**
@@ -106,7 +107,7 @@ export function fireCheckReposProgress (message) {
   browser.runtime.sendMessage({
     type: 'REPO_CHECK_UPDATED',
     ..._.omit(message, ['type'])
-  })
+  }).catch(logErrorOnDebug)
 }
 
 /**
@@ -148,6 +149,7 @@ export function fireCheckReposComplete () {
     console.log('fire: CHECK_REPOS_COMPLETE')
   }
   browser.runtime.sendMessage({type: 'CHECK_REPOS_COMPLETE'})
+    .catch(logErrorOnDebug)
 }
 
 /**
@@ -197,7 +199,7 @@ export function requestReplaceRepo (data) {
   return browser.runtime.sendMessage({
     type: 'REPLACE_REPO',
     data,
-  })
+  }).catch(logErrorOnDebug)
 }
 
  /**
@@ -263,4 +265,11 @@ export function listenPopUpPageOpenQuery () {
 export function isPopupPageOpen () {
   console.log('fire: IS_POPUP_OPEN')
   return browser.runtime.sendMessage({type: 'IS_POPUP_OPEN'})
+    .catch(logErrorOnDebug)
+}
+
+function logErrorOnDebug (error) {
+  if (process.env.DEBUG_MODE) {
+    console.warn(error.message || error.toString())
+  }
 }
