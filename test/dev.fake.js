@@ -31,7 +31,18 @@ window.chrome = {
   runtime: {
     onMessage: {},
     getURL (name) { return '/' + name },
-  }
+  },
+  notifications: {
+    create: _.partial(console.log, 'create notifications:'),
+    onClicked: {
+      addListener () {},
+    },
+  },
+  browserAction: {
+    setTitle () {},
+    setBadgeText () {},
+    setBadgeBackgroundColor () {},
+  },
 }
 
 /**
@@ -211,8 +222,7 @@ fetchMock.mock({
             })
           }
         })
-      // }, randInt(5000))
-      }, 3000)
+      }, randInt(5000))
     })
   }
 })
