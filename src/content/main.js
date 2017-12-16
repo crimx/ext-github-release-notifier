@@ -13,6 +13,16 @@ function main () {
   const menuModal = document.querySelector('.subscription-menu-modal')
   if (!menuModal) { return }
   if (process.env.DEBUG_MODE) { console.log('Notifier: detected .subscription-menu-modal') }
+
+  // "feature" detect
+  if (
+    Array.from(menuModal.querySelectorAll('.select-menu-title'))
+      .some(el => el.textContent.toLowerCase().indexOf('release') !== -1)
+  ) {
+    if (process.env.DEBUG_MODE) { console.log('Release title detected') }
+    return
+  }
+
   const repoNameTester = /^[^/\s]+\/[^/\s]+$/
   let meta = document.querySelector('meta[name=octolytics-dimension-repository_nwo]')
   if (!meta || !repoNameTester.test(meta.getAttribute('content'))) {
