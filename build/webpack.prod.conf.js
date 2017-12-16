@@ -45,21 +45,25 @@ const webpackConfig = merge(baseWebpackConfig, {
     }),
     // tailor moment locales
     new webpack.ContextReplacementPlugin(/moment[\\/]locale$/, /^\.\/en$/),
-    new LodashModuleReplacementPlugin(),
-    new UglifyJsPlugin({
-      uglifyOptions: {
-        ie8: false,
-        ecma: 6,
-        drop_console: true,
-        output: {
-          comments: false,
-          beautify: false
+    process.env.npm_config_devbuild
+      ? null
+      : new LodashModuleReplacementPlugin(),
+    process.env.npm_config_devbuild
+      ? null
+      : new UglifyJsPlugin({
+        uglifyOptions: {
+          ie8: false,
+          ecma: 6,
+          drop_console: true,
+          output: {
+            comments: false,
+            beautify: false
+          },
+          warnings: false
         },
-        warnings: false
-      },
-      sourceMap: config.build.productionSourceMap,
-      parallel: true
-    }),
+        sourceMap: config.build.productionSourceMap,
+        parallel: true
+      }),
     // extract css into its own file
     new ExtractTextPlugin({
       filename: utils.assetsPath('[name].css'),
@@ -68,17 +72,21 @@ const webpackConfig = merge(baseWebpackConfig, {
       // This will result in *all* of your app's CSS being loaded upfront.
       allChunks: false,
     }),
-    // Compress extracted CSS. We are using this plugin so that possible
-    // duplicated CSS from different components can be deduped.
-    new OptimizeCSSPlugin({
-      cssProcessorOptions: config.build.productionSourceMap
-        ? { safe: true, map: { inline: false } }
-        : { safe: true }
-    }),
+    process.env.npm_config_devbuild
+      ? null
+      // Compress extracted CSS. We are using this plugin so that possible
+      // duplicated CSS from different components can be deduped.
+      : new OptimizeCSSPlugin({
+        cssProcessorOptions: config.build.productionSourceMap
+          ? { safe: true, map: { inline: false } }
+          : { safe: true }
+      }),
     // keep module.id stable when vender modules does not change
-    new webpack.HashedModuleIdsPlugin(),
-    // enable scope hoisting
-    new webpack.optimize.ModuleConcatenationPlugin(),
+    // new webpack.HashedModuleIdsPlugin(),
+    process.env.npm_config_devbuild
+      ? null
+      // enable scope hoisting
+      : new webpack.optimize.ModuleConcatenationPlugin(),
     // copy custom static assets
     new CopyWebpackPlugin(
       browsers.map(browser => ({
@@ -90,7 +98,7 @@ const webpackConfig = merge(baseWebpackConfig, {
   ].concat(browsers.map(browser => new GenerateJsonPlugin(
     browser + '/manifest.json',
     Object.assign({}, manifest, require(`../src/manifest/${browser}.manifest.json`), { version })
-  )))
+  ))).filter(Boolean)
 })
 
 if (config.build.productionGzip) {
