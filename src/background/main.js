@@ -52,13 +52,13 @@ addRepoUpdatedMsgtListener(({newData, oldData}) => {
   if (!newData.watching || !newData.tag_name) { return }
   if (oldData.tag_name) {
     if (newData.watching === 'major') {
-      if (semver.major(newData.tag_name) === semver.major(oldData.tag_name)) { return }
+      if (semver.major(newData.tag_name, true) === semver.major(oldData.tag_name, true)) { return }
     } else if (newData.watching === 'minor') {
-      if (semver.major(newData.tag_name) === semver.major(oldData.tag_name) &&
-          semver.minor(newData.tag_name) === semver.minor(oldData.tag_name)
+      if (semver.major(newData.tag_name, true) === semver.major(oldData.tag_name, true) &&
+          semver.minor(newData.tag_name, true) === semver.minor(oldData.tag_name, true)
       ) { return }
     } else if (newData.watching === 'all') {
-      if (semver.clean(newData.tag_name) === semver.clean(oldData.tag_name)) { return }
+      if (semver.clean(newData.tag_name, true) === semver.clean(oldData.tag_name, true)) { return }
     }
   }
   isPopupPageOpen()
