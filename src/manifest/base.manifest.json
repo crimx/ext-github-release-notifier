@@ -3,7 +3,7 @@
 
   "name": "Github Release Notifier",
   "short_name": "Release Notifier",
-  "description": "Release Notifier for Github",
+  "description": "Unofficial \"polyfill\" for watching Github releases.",
 
   "version": "0.0.0",
 
