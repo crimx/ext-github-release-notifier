@@ -23,7 +23,7 @@ export function setBadgeUnread (num) {
  * @returns {Promise} A Promise that will be fulfilled with no argument.
  */
 export function addOneBadgeUnread () {
-  return browser.browserAction.getBadgeText()
+  return browser.browserAction.getBadgeText({})
     .then(text => {
       let num = Number(text)
       if (!(num > 0)) { num = 0 }
