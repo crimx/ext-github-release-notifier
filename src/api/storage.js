@@ -5,6 +5,7 @@
 
 import browser from 'webextension-polyfill'
 import _ from 'lodash'
+import semver from 'semver'
 import { getFileIcon } from '@/popup/file-type-icons'
 import { addOneBadgeUnread } from './badge'
 import {
@@ -63,7 +64,7 @@ export function addRepoNamesListener (callback) {
  * @param {string[]|string} names - string of one name or array of repo names. [owner]/[repo]
  * @returns {Promise} A Promise fulfilled with no argument if succeeded.
  */
-export function saveRepoNames (names) {
+function saveRepoNames (names) {
   if (process.env.DEBUG_MODE) {
     console.assert(_.isString(names) || _.every(names, _.isString))
   }
@@ -87,10 +88,8 @@ export function getRepoNames () {
  * Remove a repo from name list
  * @returns {Promise<string>} A Promise fulfilled with no argument if succeeded.
  */
-export function removeRepoNames (name) {
-  return getRepoNames()
-    .then(names => names.filter(n => n !== name))
-    .then(saveRepoNames)
+function removeRepoNames (name) {
+  return saveRepoNames([])
 }
 
 /**
@@ -99,7 +98,7 @@ export function removeRepoNames (name) {
  * @param {module:api/storage~ReleaseData} releaseData
  * @returns {Promise} A Promise fulfilled with the same releaseData if succeeded.
  */
-export function saveRepo (releaseData) {
+function saveRepo (releaseData) {
   return browser.storage.local.set({[releaseData.name]: releaseData})
     .then(_.constant(releaseData))
 }
@@ -125,7 +124,7 @@ export function getRepo (name) {
  * @param {string} name - repo name
  * @returns {Promise} A Promise fulfilled with the no argument if succeeded.
  */
-export function removeRepo (name) {
+function removeRepo (name) {
   return browser.storage.local.remove(name)
 }
 
@@ -144,6 +143,16 @@ export function getAllRepos () {
           )
       )
     ))
+}
+
+/**
+ * Clear all repos
+ * @returns {Promise<module:api/storage~ReleaseData[]>} A Promise fulfilled with array of ReleaseData objects if succeeded.
+ */
+export function removeAllRepos () {
+  return getRepoNames()
+    .then(names => Promise.all(names.map(removeRepo)))
+    .then(removeRepoNames)
 }
 
 /**
@@ -175,12 +184,108 @@ export function replaceRepo ({name, watching}) {
 }
 
 /**
- * Fetch release info from github
+ * Check for repo update and save data
+ * @fires browser.storage.onChanged
+ * @fires REPO_CHECK_UPDATED
+ * @fires CHECK_REPOS_COMPLETE
+ * @returns {Promise<module:api/storage~ReleaseData>} A Promise fulfilled with no argument if succeeded.
+ */
+export function checkRepos () {
+  if (!navigator.onLine) {
+    if (process.env.DEBUG_MODE) {
+      console.log('Check repo: offline')
+    }
+    return
+  }
+  return getScheduleInfo()
+  .then(info => {
+    fireCheckReposProgress({success: 0, failed: 0})
+    info.isChecking = true
+    return saveScheduleInfo(info)
+  })
+  .then(fetchAllReleaseData)
+  .then(getScheduleInfo)
+  .then(info => {
+    info.isChecking = false
+    info.lastCheck = Date.now()
+    return saveScheduleInfo(info)
+  })
+  .then(fireCheckReposComplete)
+}
+
+/**
+ * @typedef {object} ScheduleInfo
+ * @property {boolean} isChecking
+ * @property {number} lastCheck - last check time, Unix Timestamp in milliseconds
+ * @property {number} period - check period in minutes, default to 15
+ */
+
+/**
+ * @callback ScheduleInfoChangedCallback
+ * @param {module:api/storage~ScheduleInfo} scheduleInfo
+ */
+
+ /**
+  * @param {module:api/storage~ScheduleInfoChangedCallback} callback
+  * @listens browser.storage.onChanged
+  */
+export function addScheduleInfoListener (callback) {
+  if (process.env.DEBUG_MODE) {
+    if (!_.isFunction(callback)) {
+      throw new TypeError('arg 1 should be a function.')
+    }
+  }
+  browser.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName === 'local' && changes.scheduleInfo) {
+      callback(changes.scheduleInfo.newValue)
+    }
+  })
+}
+
+/**
+ * @fires browser.storage.onChanged
+ * @param {module:api/storage~ScheduleInfo} scheduleInfo
+ * @returns {Promise} A Promise fulfilled with no argument if succeeded.
+ */
+function saveScheduleInfo (scheduleInfo) {
+  if (process.env.DEBUG_MODE) {
+    console.assert(
+      _.isBoolean(scheduleInfo.isChecking) &&
+      _.isNumber(scheduleInfo.lastCheck) &&
+      _.isNumber(scheduleInfo.period),
+      `saveScheduleInfo: last check ${scheduleInfo.lastCheck}, period ${scheduleInfo.period}`
+    )
+  }
+  return browser.storage.local.set({scheduleInfo})
+    .then(_.noop)
+}
+
+/**
+ * @returns {Promise<module:api/storage~ScheduleInfo>}
+ */
+export function getScheduleInfo () {
+  return browser.storage.local.get('scheduleInfo')
+    .then(({scheduleInfo}) => {
+      if (scheduleInfo) {
+        return scheduleInfo
+      }
+      scheduleInfo = {
+        isChecking: false,
+        lastCheck: Date.now(),
+        period: 15
+      }
+      return browser.storage.local.set({scheduleInfo})
+        .then(_.constant(scheduleInfo))
+    })
+}
+
+/**
+ * Fetch release info of a repo from Github
  * @todo oauth token
  * @param {module:api/storage~ReleaseData} releaseData - only name is mandatory
  * @returns {Promise<module:api/storage~ReleaseData>} A Promise fulfilled with ReleaseData object if succeeded.
  */
-export function fetchReleaseData (releaseData) {
+function fetchReleaseData (releaseData) {
   const headers = new Headers({
     'Accept': 'application/vnd.github.v3+json'
   })
@@ -247,42 +352,12 @@ export function fetchReleaseData (releaseData) {
 }
 
 /**
- * Check for repo update and save data
- * @fires browser.storage.onChanged
- * @fires REPO_CHECK_UPDATED
- * @fires CHECK_REPOS_COMPLETE
- * @returns {Promise<module:api/storage~ReleaseData>} A Promise fulfilled with no argument if succeeded.
- */
-export function checkRepos () {
-  if (!navigator.onLine) {
-    if (process.env.DEBUG_MODE) {
-      console.log('Check repo: offline')
-    }
-    return
-  }
-  return getScheduleInfo()
-  .then(info => {
-    fireCheckReposProgress({success: 0, failed: 0})
-    info.isChecking = true
-    return saveScheduleInfo(info)
-  })
-  .then(_fetchReleaseDataInChunks)
-  .then(getScheduleInfo)
-  .then(info => {
-    info.isChecking = false
-    info.lastCheck = Date.now()
-    return saveScheduleInfo(info)
-  })
-  .then(fireCheckReposComplete)
-}
-
-/**
- * Check for repo update and save data
+ * Fetch all repos' release info from Github
  * @fires browser.storage.onChanged
  * @fires REPO_CHECK_UPDATED
  * @returns {Promise<module:api/storage~ReleaseData>} A Promise fulfilled with no argument if succeeded.
  */
-function _fetchReleaseDataInChunks () {
+function fetchAllReleaseData () {
   return getAllRepos()
     .then(repos => {
       let success = 0
@@ -293,14 +368,22 @@ function _fetchReleaseDataInChunks () {
           _.map(chunkRepos, repoData => {
             return fetchReleaseData(repoData)
               .then(newData => {
-                success += 1
-                saveRepo(newData)
-                if (newData.tag_name !== repoData.tag_name) {
-                  // new release
-                  fireRepoUpdatedMsg({newData, oldData: repoData})
+                if (newData.isWatching) {
+                  saveRepo(newData)
+                  success += 1
+                  fireCheckReposProgress({success, failed})
+                } else {
+                  removeRepo(newData.name)
+                  removeRepoNames(newData.name)
+                  if (process.env.DEBUG_MODE) {
+                    console.error(`${newData.name} is ignoring but still in the list, removed.`)
+                  }
+                }
+                if (shouldNotifyUser(newData, repoData)) {
+                  // notify new release
+                  fireRepoUpdatedMsg(newData)
                   addOneBadgeUnread()
                 }
-                fireCheckReposProgress({success, failed})
               })
               .catch(err => {
                 console.warn(err.message || err.toString())
@@ -316,67 +399,29 @@ function _fetchReleaseDataInChunks () {
 }
 
 /**
- * @typedef {object} ScheduleInfo
- * @property {boolean} isChecking
- * @property {number} lastCheck - last check time, Unix Timestamp in milliseconds
- * @property {number} period - check period in minutes, default to 15
+ * Determine whether to notify user of the new release
+ * @param {module:api/storage~ReleaseData} newData
+ * @param {module:api/storage~ReleaseData} oldData
+ * @returns {boolean}
  */
-
-/**
- * @callback ScheduleInfoChangedCallback
- * @param {module:api/storage~ScheduleInfo} scheduleInfo
- */
-
- /**
-  * @param {module:api/storage~ScheduleInfoChangedCallback} callback
-  * @listens browser.storage.onChanged
-  */
-export function addScheduleInfoListener (callback) {
-  if (process.env.DEBUG_MODE) {
-    if (!_.isFunction(callback)) {
-      throw new TypeError('arg 1 should be a function.')
+function shouldNotifyUser (newData, oldData) {
+  if (newData.tag_name === oldData.tag_name) {
+    return false
+  }
+  if (newData.watching === 'major') {
+    if (semver.major(newData.tag_name, true) === semver.major(oldData.tag_name, true)) {
+      return false
+    }
+  } else if (newData.watching === 'minor') {
+    if (semver.major(newData.tag_name, true) === semver.major(oldData.tag_name, true) &&
+        semver.minor(newData.tag_name, true) === semver.minor(oldData.tag_name, true)
+    ) {
+      return false
+    }
+  } else if (newData.watching === 'all') {
+    if (semver.clean(newData.tag_name, true) === semver.clean(oldData.tag_name, true)) {
+      return false
     }
   }
-  browser.storage.onChanged.addListener((changes, areaName) => {
-    if (areaName === 'local' && changes.scheduleInfo) {
-      callback(changes.scheduleInfo.newValue)
-    }
-  })
-}
-
-/**
- * @fires browser.storage.onChanged
- * @param {module:api/storage~ScheduleInfo} scheduleInfo
- * @returns {Promise} A Promise fulfilled with no argument if succeeded.
- */
-export function saveScheduleInfo (scheduleInfo) {
-  if (process.env.DEBUG_MODE) {
-    console.assert(
-      _.isBoolean(scheduleInfo.isChecking) &&
-      _.isNumber(scheduleInfo.lastCheck) &&
-      _.isNumber(scheduleInfo.period),
-      `saveScheduleInfo: last check ${scheduleInfo.lastCheck}, period ${scheduleInfo.period}`
-    )
-  }
-  return browser.storage.local.set({scheduleInfo})
-    .then(_.noop)
-}
-
-/**
- * @returns {Promise<module:api/storage~ScheduleInfo>}
- */
-export function getScheduleInfo () {
-  return browser.storage.local.get('scheduleInfo')
-    .then(({scheduleInfo}) => {
-      if (scheduleInfo) {
-        return scheduleInfo
-      }
-      scheduleInfo = {
-        isChecking: false,
-        lastCheck: NaN,
-        period: 15
-      }
-      return browser.storage.local.set({scheduleInfo})
-        .then(_.constant(scheduleInfo))
-    })
+  return true
 }
