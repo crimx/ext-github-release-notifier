@@ -1,5 +1,7 @@
 import Vue from 'vue'
 import App from './App'
+import Octicon from 'vue-octicon/components/Octicon.vue'
+import 'vue-octicon/icons'
 
 import { clearBadge } from '@/api/badge'
 
@@ -21,6 +23,7 @@ if (process.env.DEBUG_MODE) {
 }
 
 Vue.config.productionTip = false
+Vue.component('octicon', Octicon)
 
 clearBadge()
 

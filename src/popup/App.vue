@@ -2,7 +2,7 @@
   <div>
     <header class="header-wrap">
       <div class="header">
-        <button class="btn btn-menu" type="button">
+        <button class="btn btn-menu" type="button" @click="isShowDrawer = true">
           <octicon name="three-bars"></octicon>
         </button>
         <div>
@@ -65,7 +65,10 @@
               </a>
             </h3>
             <!-- version tag name & publish date -->
-            <a class="text-gray" :href="repo.html_url" target="_blank" rel="noopener">
+            <a
+              :href="repo.html_url" target="_blank" rel="noopener"
+              :class="moment().subtract(6, 'hours').isBefore(repo.published_at) ? 'text-orange' : 'text-gray'"
+            >
               <octicon name="tag" flip="horizontal"></octicon>
               {{ repo.tag_name || 'no release' }}
               {{ repo.published_at ? `~ ${moment(repo.published_at).from(currentTime)}` : '' }}
@@ -110,18 +113,18 @@
               </button>
               <span class="social-count">8</span>
             </span>
-            button of a repo page to start watching release.</p>
+            button on a repo page to start watching release.</p>
         </div>
       </main> <!-- blankslate for empty repo list -->
     </transition>
+    <drawer :show="isShowDrawer" @hideme="isShowDrawer = false"></drawer>
   </div>
 </template>
 
 <script>
+import Drawer from './components/Drawer'
 import moment from 'moment'
 import { requestCheckRepos } from '@/api/message'
-import Octicon from 'vue-octicon/components/Octicon.vue'
-import 'vue-octicon/icons'
 
 export default {
   name: 'app',
@@ -129,10 +132,11 @@ export default {
   data () {
     return {
       currentTime: Date.now(),
+      isShowDrawer: false,
     }
   },
   components: {
-    Octicon,
+    Drawer,
   },
   computed: {
     lastCheck () {
@@ -184,7 +188,7 @@ export default {
 // @import "primer-table-object/index.scss";
 @import "primer-forms/index.scss";
 @import "primer-layout/index.scss";
-// @import "primer-navigation/index.scss";
+@import "primer-navigation/index.scss";
 @import "primer-tooltips/index.scss";
 // @import "primer-truncate/index.scss";
 
@@ -226,7 +230,7 @@ body {
 </style>
 
 
-<style lang="scss">
+<style lang="scss" scoped>
 /*------------------------------------*\
   #components
 \*------------------------------------*/
@@ -255,7 +259,7 @@ body {
   align-items: center;
   width: 38px;
   height: 34px;
-  margin-right: 8px;
+  margin-right: 16px;
   color: rgba(255, 255, 255, 0.525);
   border: 1px solid rgba(255, 255, 255, 0.525);
   border-radius: 5px;
@@ -362,19 +366,19 @@ body {
   display: flex;
   margin-left: auto;
 }
-</style>
 
-<style>
-/*------------------------------------*\
-  #states
-\*------------------------------------*/
 @media (min-width: 992px) {
   .header,
   .pagehead {
     width: 750px
   }
 }
+</style>
 
+<style>
+/*------------------------------------*\
+  #states
+\*------------------------------------*/
 .text-gray-lighter {
   color: #b5b5b5 !important;
 }
