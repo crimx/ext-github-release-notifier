@@ -23,14 +23,17 @@ function randInt (a, b) {
 }
 
 window.chrome = {
-  storage: {
-    local: {},
-    sync: {},
-    onChanged: {},
+  alarms: {
+    onAlarm: {
+      addListener () {}
+    },
+    create () {},
+    clearAll () {}
   },
-  runtime: {
-    onMessage: {},
-    getURL (name) { return '/' + name },
+  browserAction: {
+    setTitle () {},
+    setBadgeText () {},
+    setBadgeBackgroundColor () {},
   },
   notifications: {
     create: _.partial(console.log, 'create notifications:'),
@@ -38,11 +41,41 @@ window.chrome = {
       addListener () {},
     },
   },
-  browserAction: {
-    setTitle () {},
-    setBadgeText () {},
-    setBadgeBackgroundColor () {},
+  runtime: {
+    onMessage: {},
+    getURL (name) { return '/' + name },
   },
+  storage: {
+    local: {},
+    sync: {},
+    onChanged: {},
+  },
+}
+
+/**
+ * fake alarms
+ */
+
+let alarmTimeouts = []
+let alarmListeners = []
+
+chrome.alarms.create = ({delayInMinutes}) => {
+  if (delayInMinutes) {
+    alarmTimeouts.push(setTimeout(() => {
+      alarmListeners.forEach(callback => callback())
+    }, delayInMinutes * 60 * 1000))
+  }
+}
+
+chrome.alarms.onAlarm.addListener = (callback) => {
+  console.assert(_.isFunction(callback))
+  alarmListeners.push(callback)
+}
+
+chrome.alarms.clearAll = (callback) => {
+  alarmTimeouts.forEach(clearTimeout)
+  alarmTimeouts = []
+  callback()
 }
 
 /**
@@ -93,6 +126,18 @@ chrome.storage.local.get = (keys, callback) => {
 chrome.storage.sync.get = (keys, callback) => {
   keys = _.isString(keys) ? [keys] : _.map(keys)
   callback(_.zipObject(keys, _.map(keys, _.partial(_.get, storage.sync, _, undefined))))
+}
+
+chrome.storage.local.remove = (keys, callback) => {
+  keys = _.isString(keys) ? [keys] : _.map(keys)
+  keys.forEach(key => delete storage.local[key])
+  callback()
+}
+
+chrome.storage.sync.remove = (keys, callback) => {
+  keys = _.isString(keys) ? [keys] : _.map(keys)
+  keys.forEach(key => delete storage.sync[key])
+  callback()
 }
 
 chrome.storage.local.set = (items, callback = _.noop) => {
