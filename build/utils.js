@@ -18,6 +18,7 @@ exports.cssLoaders = function (options) {
   const cssLoader = {
     loader: 'css-loader',
     options: {
+      url: false, // Disable url() handling
       sourceMap: options.sourceMap
     }
   }
