@@ -7,7 +7,7 @@ import {
 } from '@/api/storage'
 
 // delay anyway
-setTimeout(main, 100)
+setTimeout(main, 500)
 
 function main () {
   const menuModal = document.querySelector('.subscription-menu-modal')
