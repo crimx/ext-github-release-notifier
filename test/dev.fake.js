@@ -33,6 +33,7 @@ window.chrome = {
   browserAction: {
     setTitle () {},
     setBadgeText () {},
+    getBadgeText (x, cb) { cb(Date.now().toString()) },
     setBadgeBackgroundColor () {},
   },
   notifications: {
@@ -93,6 +94,7 @@ const storage = {
       .subtract(randInt(5), 'years')
     return {
       'name': name,
+      'watching': 'major',
       'etag': `W/"${faker.random.alphaNumeric(32)}"`,
       'last_modified': date.format('ddd, DD MMM Y HH:mm:ss ') + 'GMT',
       'html_url': `https://github.com/${name}/releases/${version}`,
