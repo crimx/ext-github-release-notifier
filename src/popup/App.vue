@@ -10,162 +10,105 @@
           <small class="header-description">Unofficial "polyfill" for watching Github releases.</small>
         </div>
         <div class="header-aside">
-          <button class="btn btn-sm" type="button" :disabled="!isOnline || scheduleInfo.isChecking" @click="requestCheckRepos">
+          <button class="btn btn-sm" type="button" @click="requestCheckRepos">
             <octicon :name="scheduleInfo.isChecking ? 'sync' : 'zap'" :spin="scheduleInfo.isChecking"></octicon>
             Check Now
           </button>
-          <input class="btn-filter form-control input-sm" type="text" placeholder="Filter">
+          <input v-model="filterText" class="btn-filter form-control input-sm" type="text" placeholder="Filter">
           <span class="tooltipped tooltipped-sw tooltipped-no-delay" aria-label="Sign in to increase request rate limit">
             <a href="#" class="text-white text-bold no-underline">Sign in</a>
           </span>
         </div>
       </div>
     </header>
-    <div class="pagehead-wrap">
-      <transition name="fade">
-        <div class="check-progress-bar"
-          v-if="scheduleInfo.isChecking"
-          :style="{transform: `translateX(${(repoCheckProgress.success + repoCheckProgress.failed) / repos.length * 100}%)`}"
-        ></div>
-      </transition>
-      <div class="pagehead">
-        <transition name="out-in-fade" mode="out-in">
-          <!-- checking status -->
-          <span v-if="scheduleInfo.isChecking">
-            Checking...
-            {{ repoCheckProgress.success + repoCheckProgress.failed }}/{{ repos.length }}
-          </span>
-          <!-- check schedule info -->
-          <div v-else>
-            <span class="mr-3"><octicon name="history"></octicon> Last check: {{ lastCheck }}</span>
-            <span><octicon name="clock"></octicon> Next check: {{ nextCheck }}</span>
-          </div>
-        </transition>
-      </div>
-    </div>
-    <div class="main-container" v-if="!isOnline">
+    <timing :schedule-info="scheduleInfo" :repo-check-progress="repoCheckProgress" :total="rawRepos.length"></timing>
+    <div class="alert-container" v-if="!isOnline">
       <div class="flash flash-warn text-center mt-3">
         <octicon name="alert"></octicon>
         You are currently offline.
       </div>
     </div>
-    <transition name="out-in-fade" mode="out-in">
-      <main class="main-container" v-if="repos.length > 0">
-        <div class="repo-item" v-for="repo in repos" key="repo.name">
-          <!-- author avatar -->
-          <a class=" mt-2 mr-2" :href="repo.author_url" target="_blank" rel="noopener">
-            <img class="avatar" :src="repo.avatar_url" width="48" height="48" :alt="`Avatar of ${repo.name}`">
-          </a>
-          <!-- repo info -->
-          <div>
-            <!-- repo name -->
-            <h3>
-              <a :href="`https://github.com/${repo.name}`" target="_blank" rel="noopener">
-                <span class="text-normal">{{ repo.name.split('/')[0] }} / </span>{{ repo.name.split('/')[1] }}
-              </a>
-            </h3>
-            <!-- version tag name & publish date -->
-            <a
-              :href="repo.html_url" target="_blank" rel="noopener"
-              :class="moment().subtract(6, 'hours').isBefore(repo.published_at) ? 'text-orange' : 'text-gray'"
-            >
-              <octicon name="tag" flip="horizontal"></octicon>
-              {{ repo.tag_name || 'no release' }}
-              {{ repo.published_at ? `~ ${moment(repo.published_at).from(currentTime)}` : '' }}
-            </a>
-          </div> <!-- repo info -->
-          <!-- assets -->
-          <div class="assets">
-            <!-- uploaded assets -->
-            <span v-for="asset in repo.assets.slice(0, 8)" class="tooltipped tooltipped-nw tooltipped-no-delay ml-3" :aria-label="asset.name">
-              <a class="asset text-gray" :href="asset.browser_download_url">
-                <octicon :name="asset.icon_name" scale="2"></octicon>
-              </a>
-            </span> <!-- uploaded assets -->
-            <!-- zipball & rarball -->
-            <template v-if="repo.assets.length <= 6">
-              <span v-if="repo.zipball_url" class="tooltipped tooltipped-nw tooltipped-no-delay ml-3" aria-label="Source code (zip)">
-                <a class="asset text-gray-lighter" :href="repo.zipball_url">
-                  <octicon name="file-zip" scale="2"></octicon>
-                </a>
-              </span>
-              <span v-if="repo.tarball_url" class="tooltipped tooltipped-nw tooltipped-no-delay ml-3" aria-label="Source code (tar.gz)">
-                <a class="asset text-gray-lighter" :href="repo.tarball_url">
-                  <octicon name="file-zip" scale="2"></octicon>
-                </a>
-              </span>
-            </template> <!-- zipball & rarball -->
-          </div> <!-- assets -->
-        </div> <!-- .repo-item -->
-      </main>
-      <!-- blankslate for empty repo list -->
-      <main class="main-container mt-3" v-else>
-        <div class="blankslate">
-          <octicon name="git-commit" scale="2" class="blankslate-icon"></octicon>
-          <octicon name="tag" scale="2" class="blankslate-icon"></octicon>
-          <octicon name="git-branch" scale="2" class="blankslate-icon"></octicon>
-          <h3>Empty</h3>
-          <p>Click the
-            <span class="clear-fix d-inline-block">
-              <button class="btn btn-sm btn-with-count" type="button" tabindex="-1">
-                <octicon name="eye"></octicon>
-                Watch
-              </button>
-              <span class="social-count">8</span>
-            </span>
-            button on a repo page to start watching release.</p>
-        </div>
-      </main> <!-- blankslate for empty repo list -->
-    </transition>
-    <drawer :show="isShowDrawer" @hideme="isShowDrawer = false"></drawer>
+    <main class="main-container">
+      <transition name="out-in-fade" mode="out-in">
+        <repolist v-if="rawRepos.length > 0" :repos="filteredRepos"></repolist>
+        <blankslate v-else></blankslate>
+      </transition>
+    </main>
+    <drawer :show.sync="isShowDrawer"></drawer>
   </div>
 </template>
 
 <script>
 import Drawer from './components/Drawer'
+import Timing from './components/Timing'
+import Repolist from './components/Repolist'
+import Blankslate from './components/Blankslate'
 import moment from 'moment'
 import { requestCheckRepos } from '@/api/message'
 
 export default {
   name: 'app',
-  props: ['repos', 'scheduleInfo', 'repoCheckProgress', 'isOnline'],
+  props: ['rawRepos', 'scheduleInfo', 'repoCheckProgress', 'isOnline'],
   data () {
     return {
       currentTime: Date.now(),
       isShowDrawer: false,
+      filterText: '',
     }
   },
   components: {
     Drawer,
+    Timing,
+    Repolist,
+    Blankslate,
   },
   computed: {
-    lastCheck () {
-      if (!this.scheduleInfo.lastCheck) {
-        return 'never'
-      }
-      return moment(this.scheduleInfo.lastCheck).from(this.currentTime)
+    formattedRepos () {
+      return this.rawRepos
+        .sort((a, b) => b.published_at - a.published_at)
+        .map(repo => {
+          const splitName = repo.name.split('/')
+          return {
+            ...repo,
+            authorName: splitName[0],
+            repoName: splitName[1],
+            published_from_now: repo.published_at ? `${moment(repo.published_at).from(Date.now())}` : '',
+            isFresh: moment().subtract(6, 'hours').isBefore(repo.published_at),
+            isFilterOut: false,
+          }
+        })
     },
-    nextCheck () {
-      if (!this.scheduleInfo.lastCheck) {
-        return 'never'
+    filteredRepos () {
+      const filterText = this.filterText.toLowerCase()
+      const repos = this.formattedRepos
+
+      if (!filterText) {
+        for (let i = 0; i < repos.length; i += 1) {
+          repos[i].isFilterOut = false
+        }
+        return repos
       }
-      return moment(this.scheduleInfo.lastCheck)
-        .add(this.scheduleInfo.period, 'minutes')
-        .from(this.currentTime)
+
+      const matchList = []
+      const filterOutList = []
+      for (let i = 0; i < repos.length; i += 1) {
+        if (repos[i].name.toLowerCase().indexOf(filterText) !== -1) {
+          repos[i].isFilterOut = false
+          matchList.push(repos[i])
+        } else {
+          repos[i].isFilterOut = true
+          filterOutList.push(repos[i])
+        }
+      }
+      return matchList.concat(filterOutList)
     },
   },
   methods: {
-    moment,
     requestCheckRepos () {
       if (this.isOnline && !this.scheduleInfo.isChecking) {
         requestCheckRepos()
       }
     }
-  },
-  created () {
-    setInterval(() => {
-      this.currentTime = Date.now()
-    }, 1000)
   },
 }
 </script>
@@ -316,60 +259,13 @@ body {
   }
 }
 
-.pagehead-wrap {
-  position: relative;
-  padding: 10px 0;
-  color: #586069;
-  background: #fafbfc;
-  border-bottom: 1px solid #e1e4e8;
-
-  .octicon {
-    vertical-align: text-bottom;
-  }
-}
-
-.check-progress-bar {
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.03);
-  transition: transform 0.4s;
-}
-
-.pagehead {
+.main-container,
+.alert-container {
   @extend %container;
-  position: relative;
-  z-index: 10;
-  display: flex;
-  justify-content: center;
-}
-
-.main-container {
-  @extend %container;
-}
-
-.repo-item {
-  display: flex;
-  align-items: center;
-  padding: 8px;
-  border-bottom: 1px #e1e4e8 solid;
-
-  .avatar {
-    align-self: flex-start;
-  }
-}
-
-.assets {
-  display: flex;
-  margin-left: auto;
 }
 
 @media (min-width: 992px) {
-  .header,
-  .pagehead {
+  .header {
     width: 750px
   }
 }
@@ -381,6 +277,10 @@ body {
 \*------------------------------------*/
 .text-gray-lighter {
   color: #b5b5b5 !important;
+}
+
+.img-gray {
+  filter: grayscale(1) !important;
 }
 
 .out-in-fade-enter-active, .out-in-fade-leave-active {

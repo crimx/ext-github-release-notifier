@@ -33,7 +33,7 @@ Promise.all([getAllRepos(), getScheduleInfo()])
       el: '#app',
       data () {
         return {
-          repos: allReleaseData.sort((a, b) => b.published_at - a.published_at),
+          rawRepos: allReleaseData,
           scheduleInfo,
           repoCheckProgress: {
             success: 0,
@@ -45,7 +45,7 @@ Promise.all([getAllRepos(), getScheduleInfo()])
       render (createElement) {
         return createElement(App, {
           props: {
-            repos: this.repos,
+            rawRepos: this.rawRepos,
             scheduleInfo: this.scheduleInfo,
             repoCheckProgress: this.repoCheckProgress,
             isOnline: this.isOnline
@@ -59,7 +59,8 @@ Promise.all([getAllRepos(), getScheduleInfo()])
     addRepoNamesListener(() => {
       getAllRepos()
         .then(allReleaseData => {
-          vm.repos = allReleaseData.sort((a, b) => b.published_at - a.published_at)
+          console.log(allReleaseData)
+          vm.rawRepos = allReleaseData
         })
     })
 
@@ -75,7 +76,7 @@ Promise.all([getAllRepos(), getScheduleInfo()])
       // return promise to close port
       return getAllRepos()
         .then(allReleaseData => {
-          vm.repos = allReleaseData.sort((a, b) => b.published_at - a.published_at)
+          vm.rawRepos = allReleaseData
         })
     })
 
