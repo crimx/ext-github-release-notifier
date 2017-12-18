@@ -13,6 +13,7 @@ import {
   replaceRepo,
   checkRepos,
   getScheduleInfo,
+  addRateLimitRemainingListener,
 } from '@/api/storage'
 
 if (process.env.DEBUG_MODE) {
@@ -73,6 +74,25 @@ addRepoUpdatedMsgtListener(repoData => {
         }
       )
     })
+})
+
+/* ------------------------------------ *\
+  #rate limit remaining
+\* ------------------------------------ */
+addRateLimitRemainingListener(remaining => {
+  if (remaining <= 10) {
+    browser.notifications.create(
+      'ratelimit' + remaining, // id
+      {
+        type: 'basic', // Firefox currently only support basic
+        title: 'Github Release Notifier',
+        message: `You are about to exceed rate limit (${remaining} remains). Please sign in.`,
+        iconUrl: browser.runtime.getURL('icon-128.png'),
+        eventTime: Date.now() + 5000,
+        requireInteraction: true,
+      }
+    )
+  }
 })
 
 /* ------------------------------------ *\

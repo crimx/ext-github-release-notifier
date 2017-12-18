@@ -301,6 +301,10 @@ function fetchReleaseData (releaseData) {
       if (process.env.DEBUG_MODE) {
         console.log(`Server response ${response.status} for ${releaseData.name}`)
       }
+      const rateLimitRemaining = Number(response.headers.get('X-RateLimit-Remaining'))
+      if (rateLimitRemaining > 0) {
+        saveRateLimitRemaining(rateLimitRemaining)
+      }
       if (response.status === 304) {
         // 304 Not Modified
         return releaseData
@@ -411,4 +415,39 @@ function shouldNotifyUser (newData, oldData) {
     return true
   }
   return semver.diff(nTag, oTag) === newData.watching
+}
+
+/**
+ * @callback RateLimitRemaining
+ * @param {number} rateLimitRemaining - rate limit remaining
+ */
+
+/**
+ * @param {module:api/storage~RateLimitRemainingCallback} callback
+ * @listens browser.storage.onChanged
+ */
+export function addRateLimitRemainingListener (callback) {
+  if (process.env.DEBUG_MODE) {
+    if (!_.isFunction(callback)) {
+      throw new TypeError('arg 1 should be a function.')
+    }
+  }
+  browser.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName === 'local' && changes.rateLimitRemaining) {
+      callback(changes.rateLimitRemaining.newValue)
+    }
+  })
+}
+
+/**
+ * @fires browser.storage.onChanged
+ * @param {number} num - rate limit remaining
+ * @returns {Promise} A promise with no argument
+ */
+export function saveRateLimitRemaining (num) {
+  if (process.env.DEBUG_MODE) {
+    console.assert(_.isNumber(num))
+    console.log('rate limit remaining: ' + num)
+  }
+  return browser.storage.local.set({rateLimitRemaining: num})
 }

@@ -22,10 +22,22 @@
       </div>
     </header>
     <timing :schedule-info="scheduleInfo" :repo-check-progress="repoCheckProgress" :total="rawRepos.length"></timing>
+    <!-- offline warning -->
     <div class="alert-container" v-if="!isOnline">
       <div class="flash flash-warn text-center mt-3">
         <octicon name="alert"></octicon>
         You are currently offline.
+      </div>
+    </div>
+    <!-- rate limit warning -->
+    <div class="alert-container" v-if="rateLimitRemaining <= 10">
+      <div class="flash flash-error text-center mt-3">
+        <octicon name="dashboard"></octicon>
+        {{
+          rateLimitRemaining > 1
+          ? `You are about to exceed rate limit (${rateLimitRemaining} remains). Please sign in.`
+          : `You have exceeded rate limit. Please sign in.`
+        }}
       </div>
     </div>
     <main class="main-container">
@@ -48,7 +60,7 @@ import { requestCheckRepos } from '@/api/message'
 
 export default {
   name: 'app',
-  props: ['rawRepos', 'scheduleInfo', 'repoCheckProgress', 'isOnline'],
+  props: ['rawRepos', 'scheduleInfo', 'repoCheckProgress', 'rateLimitRemaining', 'isOnline'],
   data () {
     return {
       currentTime: Date.now(),

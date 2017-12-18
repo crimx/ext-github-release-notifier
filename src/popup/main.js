@@ -16,6 +16,7 @@ import {
   getScheduleInfo,
   addScheduleInfoListener,
   addRepoNamesListener,
+  addRateLimitRemainingListener,
 } from '@/api/storage'
 
 if (process.env.DEBUG_MODE) {
@@ -39,6 +40,7 @@ Promise.all([getAllRepos(), getScheduleInfo()])
             success: 0,
             failed: 0
           },
+          rateLimitRemaining: 60,
           isOnline: navigator.onLine
         }
       },
@@ -48,6 +50,7 @@ Promise.all([getAllRepos(), getScheduleInfo()])
             rawRepos: this.rawRepos,
             scheduleInfo: this.scheduleInfo,
             repoCheckProgress: this.repoCheckProgress,
+            rateLimitRemaining: this.rateLimitRemaining,
             isOnline: this.isOnline
           }
         })
@@ -78,6 +81,10 @@ Promise.all([getAllRepos(), getScheduleInfo()])
         .then(allReleaseData => {
           vm.rawRepos = allReleaseData
         })
+    })
+
+    addRateLimitRemainingListener(remaining => {
+      vm.rateLimitRemaining = remaining
     })
 
     window.addEventListener('online', () => { vm.isOnline = true }, false)
