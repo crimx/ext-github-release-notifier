@@ -9,12 +9,12 @@
     <div class="pagehead">
       <transition name="out-in-fade" mode="out-in">
         <!-- checking status -->
-        <span v-if="scheduleInfo.isChecking">
+        <span v-if="scheduleInfo.isChecking" class="d-block text-center">
           Checking...
           {{ repoCheckProgress.success + repoCheckProgress.failed }}/{{ total }}
         </span>
         <!-- check schedule info -->
-        <div v-else>
+        <div v-else class="text-center">
           <span class="mr-3"><octicon name="history"></octicon> Last check: {{ lastCheck }}</span>
           <span><octicon name="clock"></octicon> Next check: {{ nextCheck }}</span>
         </div>
@@ -84,8 +84,6 @@ export default {
 .pagehead {
   position: relative;
   z-index: 10;
-  display: flex;
-  justify-content: center;
   width: 700px;
   margin: 0 auto;
   padding-left: 16px;
