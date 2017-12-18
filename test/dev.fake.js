@@ -216,6 +216,8 @@ chrome.runtime.onMessage.addListener = callback => {
  * Mock Fetch
  */
 
+let rateLimitRemaining = 20
+
 fetchMock.mock({
   name: 'fetch release',
   matcher: /github\.com\/repos\//,
@@ -248,6 +250,7 @@ fetchMock.mock({
           headers: {
             'etag': `W/"${faker.random.alphaNumeric(32)}"`,
             'last_modified': date.format('ddd, DD MMM Y HH:mm:ss ') + 'GMT',
+            'X-RateLimit-Remaining': String(rateLimitRemaining--),
           },
           body: {
             'html_url': `https://github.com/${name}/releases/${version}`,
