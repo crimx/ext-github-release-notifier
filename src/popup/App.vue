@@ -15,9 +15,15 @@
             Check Now
           </button>
           <input v-model="filterText" class="btn-filter form-control input-sm" type="text" placeholder="Filter">
-          <span class="tooltipped tooltipped-sw tooltipped-no-delay" aria-label="Sign in to increase request rate limit">
-            <a href="#" class="text-white text-bold no-underline">Sign in</a>
-          </span>
+          <transition name="out-in-fade" mode="out-in">
+            <a v-if="hasToken && !isFetchingToken" class="text-inherit" href="#" @click.prevent="signOut" role="button" aria-label="Sign out" title="Sign out">
+              <octicon name="sign-out" scale="1.5" style="position: relative; top: 2px;"></octicon>
+            </a>
+            <span v-if="!hasToken && !isFetchingToken" class="tooltipped tooltipped-sw tooltipped-no-delay" aria-label="Sign in to increase request rate limit">
+              <a href="#" class="text-white text-bold no-underline" @click.prevent="signIn">Sign in</a>
+            </span>
+            <octicon v-if="isFetchingToken" name="sync" spin scale="1.5"></octicon>
+          </transition>
         </div>
       </div>
     </header>
@@ -56,16 +62,25 @@ import Timing from './components/Timing'
 import Repolist from './components/Repolist'
 import Blankslate from './components/Blankslate'
 import moment from 'moment'
-import { requestCheckRepos } from '@/api/message'
+import { requestCheckRepos, requestAuthorize } from '@/api/message'
+import { removeToken } from '@/api/oauth'
 
 export default {
   name: 'app',
-  props: ['rawRepos', 'scheduleInfo', 'repoCheckProgress', 'rateLimitRemaining', 'isOnline'],
+  props: [
+    'rawRepos',
+    'scheduleInfo',
+    'repoCheckProgress',
+    'rateLimitRemaining',
+    'hasToken',
+    'isOnline',
+  ],
   data () {
     return {
       currentTime: Date.now(),
       isShowDrawer: false,
       filterText: '',
+      isFetchingToken: false,
     }
   },
   components: {
@@ -116,11 +131,19 @@ export default {
     },
   },
   methods: {
+    signIn () {
+      this.isFetchingToken = true
+      requestAuthorize()
+        .then(() => {
+          this.isFetchingToken = false
+        })
+    },
     requestCheckRepos () {
       if (this.isOnline && !this.scheduleInfo.isChecking) {
         requestCheckRepos()
       }
-    }
+    },
+    signOut: removeToken,
   },
 }
 </script>
@@ -240,6 +263,8 @@ body {
 
 .header-aside {
   margin-left: auto;
+  display: flex;
+  align-items: center;
   padding-top: 12px;
   padding-bottom: 12px;
 

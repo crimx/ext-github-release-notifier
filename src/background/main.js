@@ -4,6 +4,7 @@ import { clearBadge } from '@/api/badge'
 
 import {
   isPopupPageOpen,
+  addAuthorizeRequestListener,
   addReplaceRepoRequestListener,
   addCheckReposRequestListener,
   addRepoUpdatedMsgtListener,
@@ -15,6 +16,8 @@ import {
   getScheduleInfo,
   addRateLimitRemainingListener,
 } from '@/api/storage'
+
+import { authorize, checkAccessToken, removeToken } from '@/api/oauth'
 
 if (process.env.DEBUG_MODE) {
   console.log(`Debug mode enabled`)
@@ -93,6 +96,47 @@ addRateLimitRemainingListener(remaining => {
       }
     )
   }
+})
+
+/* ------------------------------------ *\
+  #perform oauth authorization
+\* ------------------------------------ */
+addAuthorizeRequestListener(() => {
+  return authorize()
+    .catch(err => {
+      if (process.env.DEBUG_MODE) {
+        console.error(err)
+      }
+      browser.notifications.create(
+        'authorize', // id
+        {
+          type: 'basic', // Firefox currently only support basic
+          title: 'Github Release Notifier',
+          message: `Unable to sign in.`,
+          iconUrl: browser.runtime.getURL('icon-128.png'),
+          eventTime: Date.now() + 5000,
+        }
+      )
+    })
+})
+
+browser.runtime.onStartup.addListener(() => {
+  checkAccessToken()
+    .then(result => {
+      if (!result) {
+        removeToken()
+        browser.notifications.create(
+          'token', // id
+          {
+            type: 'basic', // Firefox currently only support basic
+            title: 'Github Release Notifier',
+            message: `Access token is revoked. Please sign in again.`,
+            iconUrl: browser.runtime.getURL('icon-128.png'),
+            eventTime: Date.now() + 5000,
+          }
+        )
+      }
+    })
 })
 
 /* ------------------------------------ *\

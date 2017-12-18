@@ -19,6 +19,8 @@ import {
   addRateLimitRemainingListener,
 } from '@/api/storage'
 
+import { addTokenListener, getToken } from '@/api/oauth'
+
 if (process.env.DEBUG_MODE) {
   console.log('DEBUG_MODE enabled')
 }
@@ -28,8 +30,8 @@ Vue.component('octicon', Octicon)
 
 clearBadge()
 
-Promise.all([getAllRepos(), getScheduleInfo()])
-  .then(([allReleaseData, scheduleInfo]) => {
+Promise.all([getAllRepos(), getScheduleInfo(), getToken()])
+  .then(([allReleaseData, scheduleInfo, token]) => {
     const vm = new Vue({
       el: '#app',
       data () {
@@ -40,6 +42,7 @@ Promise.all([getAllRepos(), getScheduleInfo()])
             success: 0,
             failed: 0
           },
+          hasToken: Boolean(token),
           rateLimitRemaining: 60,
           isOnline: navigator.onLine
         }
@@ -51,6 +54,7 @@ Promise.all([getAllRepos(), getScheduleInfo()])
             scheduleInfo: this.scheduleInfo,
             repoCheckProgress: this.repoCheckProgress,
             rateLimitRemaining: this.rateLimitRemaining,
+            hasToken: this.hasToken,
             isOnline: this.isOnline
           }
         })
@@ -85,6 +89,10 @@ Promise.all([getAllRepos(), getScheduleInfo()])
 
     addRateLimitRemainingListener(remaining => {
       vm.rateLimitRemaining = remaining
+    })
+
+    addTokenListener(token => {
+      vm.hasToken = Boolean(token)
     })
 
     window.addEventListener('online', () => { vm.isOnline = true }, false)

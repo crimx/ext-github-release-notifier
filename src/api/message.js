@@ -273,3 +273,48 @@ function logErrorOnDebug (error) {
     console.warn(error.message || error.toString())
   }
 }
+
+/**
+ * @typedef {string} MsgAuthorize
+ * @property {string} type - 'AUTHORIZE'
+ */
+
+ /**
+ * @event AUTHORIZE
+ * @type {module:api/message~MsgAuthorize}
+ */
+
+/**
+ * @callback AuthorizeRequestCallback
+ */
+
+/**
+ * Listens request from other pages and perform oauth authorization
+ * @param {module:api/message~AuthorizeRequestCallback} callback
+ * @listens AUTHORIZE
+ */
+export function addAuthorizeRequestListener (callback) {
+  if (process.env.DEBUG_MODE) {
+    console.assert(_.isFunction(callback))
+  }
+  browser.runtime.onMessage.addListener(message => {
+    if (message.type === 'AUTHORIZE') {
+      if (process.env.DEBUG_MODE) {
+        console.log('Msg Receive: AUTHORIZE')
+      }
+      return callback()
+    }
+  })
+}
+
+/**
+ * @fires AUTHORIZE
+ */
+export function requestAuthorize () {
+  if (process.env.DEBUG_MODE) {
+    console.log('fire: AUTHORIZE')
+  }
+  return browser.runtime.sendMessage({
+    type: 'AUTHORIZE',
+  }).catch(logErrorOnDebug)
+}

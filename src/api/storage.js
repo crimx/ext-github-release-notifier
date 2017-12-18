@@ -8,6 +8,7 @@ import _ from 'lodash'
 import semver from 'semver'
 import { getFileIcon } from '@/popup/file-type-icons'
 import { addOneBadgeUnread } from './badge'
+import { getToken } from './oauth'
 import {
   fireRepoUpdatedMsg,
   fireCheckReposProgress,
@@ -296,7 +297,11 @@ function fetchReleaseData (releaseData) {
     headers.append('If-Modified-Since', releaseData.last_modified)
   }
 
-  return fetch(`https://api.github.com/repos/${releaseData.name}/releases/latest`, {headers})
+  return getToken()
+    .then(token => {
+      const params = token ? `?access_token=${token}` : ''
+      return fetch(`https://api.github.com/repos/${releaseData.name}/releases/latest${params}`, {headers})
+    })
     .then(response => {
       if (process.env.DEBUG_MODE) {
         console.log(`Server response ${response.status} for ${releaseData.name}`)
@@ -418,7 +423,7 @@ function shouldNotifyUser (newData, oldData) {
 }
 
 /**
- * @callback RateLimitRemaining
+ * @callback RateLimitRemainingCallback
  * @param {number} rateLimitRemaining - rate limit remaining
  */
 
