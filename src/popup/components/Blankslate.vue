@@ -1,4 +1,4 @@
-<template functional>
+<template>
   <div v-once class="blankslate mt-3">
     <octicon name="git-commit" scale="2" class="blankslate-icon"></octicon>
     <octicon name="tag" scale="2" class="blankslate-icon"></octicon>
