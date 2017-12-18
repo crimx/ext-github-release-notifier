@@ -66,10 +66,10 @@ function inject (menuModal, repoData) {
     </div>
   </div>
 
-  <div class="select-menu-item${repoData.watching === 'all' ? ' selected' : ''}" role="menuitem" tabindex="0">
+  <div class="select-menu-item${repoData.watching === 'patch' ? ' selected' : ''}" role="menuitem" tabindex="0">
     <svg aria-hidden="true" class="octicon octicon-check select-menu-item-icon" height="16" version="1.1" viewBox="0 0 12 16" width="12"><path fill-rule="evenodd" d="M12 5l-8 8-4-4 1.5-1.5L4 10l6.5-6.5z"></path></svg>
     <div class="select-menu-item-text">
-      <input ${repoData.watching === 'all' ? 'check="check"' : ''} id="release_notifier_all" name="release_notifier" type="radio" value="all">
+      <input ${repoData.watching === 'patch' ? 'check="check"' : ''} id="release_notifier_all" name="release_notifier" type="radio" value="all">
       <span class="select-menu-item-heading">Watching all</span>
       <span class="description">Be notified of new all release.</span>
     </div>

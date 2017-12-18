@@ -19,7 +19,7 @@ import {
  * @see {@link https://developer.github.com/v3/repos/releases/}
  * @typedef {object} ReleaseData
  * @property {string} name - repo name [owner]/[repo]
- * @property {string} watching - 'major', 'minor', 'all' or ''
+ * @property {string} watching - 'major', 'minor', 'patch' or ''
  * @property {string} etag
  * @property {string} last_modified, RFC 2822 string
  * @property {string} avatar_url - author avatar
@@ -368,7 +368,7 @@ function fetchAllReleaseData () {
           _.map(chunkRepos, repoData => {
             return fetchReleaseData(repoData)
               .then(newData => {
-                if (newData.isWatching) {
+                if (newData.watching) {
                   saveRepo(newData)
                   success += 1
                   fireCheckReposProgress({success, failed})
@@ -376,7 +376,7 @@ function fetchAllReleaseData () {
                   removeRepo(newData.name)
                   removeRepoNames(newData.name)
                   if (process.env.DEBUG_MODE) {
-                    console.error(`${newData.name} is ignoring but still in the list, removed.`)
+                    console.warn(`${newData.name} is ignoring but still in the list, removed.`)
                   }
                 }
                 if (shouldNotifyUser(newData, repoData)) {
@@ -405,23 +405,10 @@ function fetchAllReleaseData () {
  * @returns {boolean}
  */
 function shouldNotifyUser (newData, oldData) {
-  if (newData.tag_name === oldData.tag_name) {
-    return false
+  const nTag = newData.tag_name
+  const oTag = oldData.tag_name
+  if (!semver.valid(nTag) || !semver.valid(oTag)) {
+    return true
   }
-  if (newData.watching === 'major') {
-    if (semver.major(newData.tag_name, true) === semver.major(oldData.tag_name, true)) {
-      return false
-    }
-  } else if (newData.watching === 'minor') {
-    if (semver.major(newData.tag_name, true) === semver.major(oldData.tag_name, true) &&
-        semver.minor(newData.tag_name, true) === semver.minor(oldData.tag_name, true)
-    ) {
-      return false
-    }
-  } else if (newData.watching === 'all') {
-    if (semver.clean(newData.tag_name, true) === semver.clean(oldData.tag_name, true)) {
-      return false
-    }
-  }
-  return true
+  return semver.diff(nTag, oTag) === newData.watching
 }
