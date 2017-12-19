@@ -206,7 +206,7 @@ export function checkRepos () {
   })
   .then(fetchAllReleaseData)
   .then(({total, failed}) => {
-    if (failed >= total && navigator.onLine) {
+    if (total > 0 && failed >= total && navigator.onLine) {
       checkAccessToken()
         .then(result => {
           if (!result) {
