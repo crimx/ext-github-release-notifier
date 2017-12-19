@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
 
-  "name": "Github Release Notifier",
+  "name": "Release Notifier for Github",
   "short_name": "Release Notifier",
   "description": "Unofficial \"polyfill\" for watching Github releases.",
 

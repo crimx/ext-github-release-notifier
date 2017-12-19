@@ -6,7 +6,7 @@
           <octicon name="three-bars"></octicon>
         </button>
         <div>
-          <h1 class="header-title">Github Release Notifier</h1>
+          <h1 class="header-title">Release Notifier for Github</h1>
           <small class="header-description">Unofficial "polyfill" for watching Github releases.</small>
         </div>
         <div class="header-aside">
@@ -14,7 +14,7 @@
             <octicon :name="scheduleInfo.isChecking ? 'sync' : 'zap'" :spin="scheduleInfo.isChecking"></octicon>
             Check Now
           </button>
-          <input v-model="filterText" class="btn-filter form-control input-sm" type="text" placeholder="Filter">
+          <input v-model="filterText" class="btn-filter form-control input-sm" type="text" placeholder="Filter repos">
           <transition name="out-in-fade" mode="out-in">
             <a v-if="hasToken && !isFetchingToken" class="tooltipped tooltipped-sw text-inherit" href="#" @click.prevent="signOut" role="button" :aria-label="`Sign out (rate limit remaining: ${rateLimitRemaining})`">
               <octicon name="sign-out" scale="1.5" style="position: relative; top: 2px;"></octicon>
