@@ -20,7 +20,7 @@ import {
  * @see {@link https://developer.github.com/v3/repos/releases/}
  * @typedef {object} ReleaseData
  * @property {string} name - repo name [owner]/[repo]
- * @property {string} watching - 'major', 'minor', 'patch' or ''
+ * @property {string} watching - 'major', 'minor', 'all' or ''
  * @property {string} etag
  * @property {string} last_modified, RFC 2822 string
  * @property {string} avatar_url - author avatar
@@ -419,7 +419,13 @@ function shouldNotifyUser (newData, oldData) {
   if (!semver.valid(nTag) || !semver.valid(oTag)) {
     return true
   }
-  return semver.diff(nTag, oTag) === newData.watching
+  const diff = semver.diff(nTag, oTag)
+  switch (newData.watching) {
+    case 'major': return diff === 'major'
+    case 'minor': return diff === 'major' || diff === 'minor'
+    case 'all': return Boolean(diff)
+    default: return false
+  }
 }
 
 /**
