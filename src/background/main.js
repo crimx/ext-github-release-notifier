@@ -17,7 +17,7 @@ import {
   addRateLimitRemainingListener,
 } from '@/api/storage'
 
-import { authorize, checkAccessToken, removeToken } from '@/api/oauth'
+import { authorize } from '@/api/oauth'
 
 if (process.env.DEBUG_MODE) {
   console.log(`Debug mode enabled`)
@@ -105,7 +105,7 @@ addAuthorizeRequestListener(() => {
   return authorize()
     .catch(err => {
       if (process.env.DEBUG_MODE) {
-        console.error(err)
+        console.warn(err)
       }
       browser.notifications.create(
         'authorize', // id
