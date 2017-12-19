@@ -434,9 +434,12 @@ function fetchAllReleaseData () {
 function shouldNotifyUser (newData, oldData) {
   const nTag = newData.tag_name
   const oTag = oldData.tag_name
+  if (!nTag || nTag === oTag) { return false }
+
   if (!semver.valid(nTag) || !semver.valid(oTag)) {
     return true
   }
+
   const diff = semver.diff(nTag, oTag)
   switch (newData.watching) {
     case 'major': return diff === 'major'
