@@ -292,7 +292,6 @@ export function getScheduleInfo () {
 
 /**
  * Fetch release info of a repo from Github
- * @todo oauth token
  * @param {module:api/storage~ReleaseData} releaseData - only name is mandatory
  * @returns {Promise<module:api/storage~ReleaseData>} A Promise fulfilled with ReleaseData object if succeeded.
  */
