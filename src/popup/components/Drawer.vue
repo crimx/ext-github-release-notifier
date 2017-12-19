@@ -62,7 +62,7 @@ export default {
       name: 'drawer',
       storeURL: navigator.userAgent.indexOf('Chrome') !== -1
         ? 'https://chrome.google.com/webstore/detail/' + chrome.runtime.id
-        : '' /** @todo Firefox store url */
+        : 'https://addons.mozilla.org/en-US/firefox/addon/release-notifier-for-github/'
     }
   },
   methods: {
