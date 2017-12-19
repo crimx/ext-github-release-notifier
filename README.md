@@ -1,6 +1,6 @@
 # [Release Notifier for Github](https://github.com/crimx/ext-github-release-notifier)
 
-Unofficial "polyfill" for watching Github releases.
+Unofficial "polyfill" for watching Github releases. It was based on [this](https://github.com/isaacs/github/issues/410#issuecomment-291797759) lovely idea.
 
 - Chrome Extension <https://chrome.google.com/webstore/detail/gjhmlndokehcbkaockjlgeofgkiaiflg>
 - Firefox Add-on <https://addons.mozilla.org/firefox/addon/release-notifier-for-github/>
