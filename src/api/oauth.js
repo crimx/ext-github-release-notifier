@@ -4,6 +4,7 @@
 
 import browser from 'webextension-polyfill'
 import { clientId, clientSecret } from './oauth-data'
+import { saveRateLimitRemaining } from './storage'
 
 const platform = navigator.userAgent.indexOf('Chrome') !== -1 ? 'chrome' : 'firefox'
 
@@ -14,6 +15,7 @@ const platform = navigator.userAgent.indexOf('Chrome') !== -1 ? 'chrome' : 'fire
 export function authorize () {
   return fetchToken()
     .then(saveToken)
+    .then(checkAccessToken) // update the rate limit remaining
 }
 
 /**
@@ -57,11 +59,11 @@ export function fetchToken () {
   .then(redirectURL => {
     const params = new URL(redirectURL).searchParams
     if (params.get('state') !== state) {
-      return Promise.reject(new Error('Oauth: wrong state'))
+      throw new Error('Oauth: wrong state') // skip all .then()
     }
     const code = params.get('code')
     if (!code) {
-      return Promise.reject(new Error('Oauth: empty temporary code'))
+      throw new Error('Oauth: empty temporary code') // skip all .then()
     }
     if (process.env.DEBUG_MODE) {
       console.log('Oauth: received temporary code ' + code)
@@ -89,7 +91,10 @@ export function fetchToken () {
         console.log('Oauth: received access token: ', json.access_token)
       }
     }
-    return json.access_token || Promise.reject(new Error('Oauth: empty access token'))
+    if (!json.access_token) {
+      throw new Error('Oauth: empty access token') // skip all .then()
+    }
+    return json.access_token
   })
 }
 
@@ -108,7 +113,13 @@ export function checkAccessToken () {
           'Authorization': `Basic ${btoa(`${clientId[platform]}:${clientSecret[platform]}`)}`,
         }
       })
-      .then(response => response.json())
+      .then(response => {
+        const rateLimitRemaining = Number(response.headers.get('X-RateLimit-Remaining'))
+        if (rateLimitRemaining > 0) {
+          saveRateLimitRemaining(rateLimitRemaining)
+        }
+        return response.json()
+      })
       .then(json => {
         if (process.env.DEBUG_MODE) {
           console.log('access token check result:', json)
