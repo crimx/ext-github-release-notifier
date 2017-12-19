@@ -16,10 +16,10 @@
           </button>
           <input v-model="filterText" class="btn-filter form-control input-sm" type="text" placeholder="Filter">
           <transition name="out-in-fade" mode="out-in">
-            <a v-if="hasToken && !isFetchingToken" class="text-inherit" href="#" @click.prevent="signOut" role="button" aria-label="Sign out" title="Sign out">
+            <a v-if="hasToken && !isFetchingToken" class="tooltipped tooltipped-sw text-inherit" href="#" @click.prevent="signOut" role="button" :aria-label="`Sign out (rate limit remaining: ${rateLimitRemaining})`">
               <octicon name="sign-out" scale="1.5" style="position: relative; top: 2px;"></octicon>
             </a>
-            <span v-if="!hasToken && !isFetchingToken" class="tooltipped tooltipped-sw tooltipped-no-delay" aria-label="Sign in to increase request rate limit">
+            <span v-if="!hasToken && !isFetchingToken" class="tooltipped tooltipped-sw tooltipped-no-delay" :aria-label="`Sign in to increase request rate limit (remaining: ${rateLimitRemaining})`">
               <a href="#" class="text-white text-bold no-underline" @click.prevent="signIn">Sign in</a>
             </span>
             <octicon v-if="isFetchingToken" name="sync" spin scale="1.5"></octicon>
@@ -41,7 +41,7 @@
         <octicon name="dashboard"></octicon>
         {{
           rateLimitRemaining > 1
-          ? `You are about to exceed rate limit (${rateLimitRemaining} remains). Please sign in.`
+          ? `You are about to exceed rate limit (remaining: ${rateLimitRemaining}). Please sign in.`
           : `You have exceeded rate limit. Please sign in.`
         }}
       </div>

@@ -16,6 +16,7 @@ import {
   getScheduleInfo,
   addScheduleInfoListener,
   addRepoNamesListener,
+  getRateLimitRemaining,
   addRateLimitRemainingListener,
 } from '@/api/storage'
 
@@ -30,8 +31,8 @@ Vue.component('octicon', Octicon)
 
 clearBadge()
 
-Promise.all([getAllRepos(), getScheduleInfo(), getToken()])
-  .then(([allReleaseData, scheduleInfo, token]) => {
+Promise.all([getAllRepos(), getScheduleInfo(), getToken(), getRateLimitRemaining()])
+  .then(([allReleaseData, scheduleInfo, token, rateLimitRemaining]) => {
     const vm = new Vue({
       el: '#app',
       data () {
@@ -43,7 +44,7 @@ Promise.all([getAllRepos(), getScheduleInfo(), getToken()])
             failed: 0
           },
           hasToken: Boolean(token),
-          rateLimitRemaining: 60,
+          rateLimitRemaining,
           isOnline: navigator.onLine
         }
       },

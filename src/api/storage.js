@@ -483,3 +483,11 @@ export function saveRateLimitRemaining (num) {
   }
   return browser.storage.local.set({rateLimitRemaining: num})
 }
+
+/**
+ * @returns {Promise<number>} A promise with the rate limit remaining count
+ */
+export function getRateLimitRemaining () {
+  return browser.storage.local.get('rateLimitRemaining')
+    .then(({rateLimitRemaining}) => rateLimitRemaining >= 0 ? rateLimitRemaining : 60)
+}
