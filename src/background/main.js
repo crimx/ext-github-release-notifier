@@ -120,25 +120,6 @@ addAuthorizeRequestListener(() => {
     })
 })
 
-browser.runtime.onStartup.addListener(() => {
-  checkAccessToken()
-    .then(result => {
-      if (!result) {
-        removeToken()
-        browser.notifications.create(
-          'token', // id
-          {
-            type: 'basic', // Firefox currently only support basic
-            title: 'Github Release Notifier',
-            message: `Access token is revoked. Please sign in again.`,
-            iconUrl: browser.runtime.getURL('icon-128.png'),
-            eventTime: Date.now() + 5000,
-          }
-        )
-      }
-    })
-})
-
 /* ------------------------------------ *\
   #alarms
 \* ------------------------------------ */

@@ -109,7 +109,12 @@ export function checkAccessToken () {
         }
       })
       .then(response => response.json())
-      .then(json => Boolean(json.created_at))
+      .then(json => {
+        if (process.env.DEBUG_MODE) {
+          console.log('access token check result:', json)
+        }
+        return Boolean(json.created_at)
+      })
       .catch(() => true) // unknown network error, keep the toekn
     })
 }

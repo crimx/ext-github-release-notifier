@@ -8,7 +8,7 @@ import _ from 'lodash'
 import semver from 'semver'
 import { getFileIcon } from '@/popup/file-type-icons'
 import { addOneBadgeUnread } from './badge'
-import { getToken } from './oauth'
+import { getToken, checkAccessToken, removeToken } from './oauth'
 import {
   fireRepoUpdatedMsg,
   fireCheckReposProgress,
@@ -205,6 +205,16 @@ export function checkRepos () {
     return saveScheduleInfo(info)
   })
   .then(fetchAllReleaseData)
+  .then(({total, failed}) => {
+    if (failed >= total && navigator.onLine) {
+      checkAccessToken()
+        .then(result => {
+          if (!result) {
+            removeToken()
+          }
+        })
+    }
+  })
   .then(getScheduleInfo)
   .then(info => {
     info.isChecking = false
@@ -361,10 +371,17 @@ function fetchReleaseData (releaseData) {
 }
 
 /**
+ * @typedef {object} FetchReleaseStatus
+ * @property {number} total
+ * @property {number} success
+ * @property {number} failed
+ */
+
+/**
  * Fetch all repos' release info from Github
  * @fires browser.storage.onChanged
  * @fires REPO_CHECK_UPDATED
- * @returns {Promise<module:api/storage~ReleaseData>} A Promise fulfilled with no argument if succeeded.
+ * @returns {Promise<module:api/storage~FetchReleaseStatus>} A Promise fulfilled with FetchReleaseStatus if succeeded.
  */
 function fetchAllReleaseData () {
   return getAllRepos()
@@ -404,6 +421,7 @@ function fetchAllReleaseData () {
       })
 
       return _.reduce(executors, (p, exe) => p.then(exe), Promise.resolve())
+        .then(_.constant({total: repos.length, success, failed}))
     })
 }
 
