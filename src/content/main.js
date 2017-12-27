@@ -9,7 +9,11 @@ import {
 // delay anyway
 setTimeout(main, 500)
 
+window.addEventListener('click', main, true)
+
 function main () {
+  if (document.querySelector('#release-notifier')) { return }
+
   const menuModal = document.querySelector('.subscription-menu-modal')
   if (!menuModal) { return }
   if (process.env.DEBUG_MODE) { console.log('Notifier: detected .subscription-menu-modal') }
@@ -41,6 +45,7 @@ function main () {
 function inject (menuModal, repoData) {
   const menuHeader = document.createElement('div')
   menuHeader.className = 'select-menu-header'
+  menuHeader.id = 'release-notifier'
   menuHeader.tabIndex = -1
   menuHeader.innerHTML = '<a class="select-menu-title" href="https://github.com/crimx/ext-github-release-notifier">Release Notifier</a>'
 
