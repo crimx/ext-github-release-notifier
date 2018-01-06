@@ -4,12 +4,22 @@ import {
 
 import {
   getRepo,
+  addRepoNamesListener,
 } from '@/api/storage'
 
 // delay anyway
 setTimeout(main, 500)
 
 window.addEventListener('click', main, true)
+
+addRepoNamesListener(() => {
+  const notifier = document.querySelector('#release-notifier')
+  if (notifier) {
+    notifier.remove()
+    document.querySelector('#release-notifier-list').remove()
+  }
+  main()
+})
 
 function main () {
   if (document.querySelector('#release-notifier')) { return }
@@ -51,6 +61,7 @@ function inject (menuModal, repoData) {
 
   const menuList = document.createElement('div')
   menuList.className = 'select-menu-list'
+  menuList.id = 'release-notifier-list'
   menuList.setAttribute('role', 'menu')
   menuList.innerHTML = `
   <div class="select-menu-item${repoData.watching === 'major' ? ' selected' : ''}" role="menuitem" tabindex="0">
