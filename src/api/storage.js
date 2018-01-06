@@ -81,8 +81,23 @@ function saveRepoNames (names) {
  * @returns {Promise<string[]>} A Promise fulfilled with array of repo names ([owner]/[repo]) if succeeded.
  */
 export function getRepoNames () {
-  return browser.storage.sync.get('repos')
+  const getLocalRepos = browser.storage.local.get(null)
+    .then(result => Object.keys(result).filter(name => /^[^/]+\/[^/]+$/.test(name)))
+  const getSyncRepos = browser.storage.sync.get('repos')
     .then(({repos}) => repos || [])
+
+  return Promise.all([getSyncRepos, getLocalRepos])
+    .then(([syncRepos, localRepos]) => {
+      if (process.env.DEBUG_MODE) {
+        console.log(`reconcile storage:\nsync(${syncRepos})\nlocal(${localRepos})`)
+        console.log('repos: ' + Array.from(new Set(syncRepos.concat(localRepos))))
+      }
+      const repos = Array.from(new Set(syncRepos.concat(localRepos)))
+      if (repos.length !== syncRepos.length) {
+        saveRepoNames(repos)
+      }
+      return repos
+    })
 }
 
 /**
