@@ -5,7 +5,7 @@ Unofficial "polyfill" for watching Github releases. It was based on [this](https
 - Chrome Extension <https://chrome.google.com/webstore/detail/gjhmlndokehcbkaockjlgeofgkiaiflg>
 - Firefox Add-on <https://addons.mozilla.org/firefox/addon/release-notifier-for-github/>
 
-It checks Github releases every 15 minutes.
+It checks Github releases every 15 minutes and notifies releases by browser notification.
 
 Fast & light-weight: It is loaded and run only when needed. And instead of subscribing atom feeds, it uses Github api and takes advantage of 403 cache.
 
