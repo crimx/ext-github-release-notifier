@@ -1,6 +1,6 @@
 {
   "name": "ext-github-release-notifier",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Unofficial \"polyfill\" for watching Github releases.",
   "author": "CRIMX <straybugs@gmail.com>",
   "private": true,
