@@ -127,10 +127,11 @@ browser.alarms.onAlarm.addListener(() => {
   if (process.env.DEBUG_MODE) {
     console.log('Alarm triggered')
   }
-  checkRepos().then(setAlarm)
+  checkRepos().then(setAlarm).catch(setAlarm)
 })
 
-setAlarm()
+chrome.runtime.onInstalled.addListener(setAlarm)
+browser.runtime.onStartup.addListener(setAlarm)
 
 function setAlarm () {
   return browser.alarms.clearAll()
@@ -138,7 +139,7 @@ function setAlarm () {
     .then(({lastCheck, period}) => {
       if (lastCheck + period * 60 <= Date.now()) {
         // check now
-        return checkRepos().then(setAlarm)
+        return checkRepos().then(setAlarm).catch(setAlarm)
       }
       if (process.env.DEBUG_MODE) {
         console.log(`set alarm: in ${period} miniutes`)
