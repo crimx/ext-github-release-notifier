@@ -263,7 +263,9 @@ export function listenPopUpPageOpenQuery () {
  * @fires IS_POPUP_OPEN
  */
 export function isPopupPageOpen () {
-  console.log('fire: IS_POPUP_OPEN')
+  if (process.env.DEBUG_MODE) {
+    console.log('fire: IS_POPUP_OPEN')
+  }
   return browser.runtime.sendMessage({type: 'IS_POPUP_OPEN'})
     .catch(logErrorOnDebug)
 }
