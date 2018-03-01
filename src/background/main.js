@@ -30,7 +30,7 @@ if (process.env.DEBUG_MODE) {
 browser.notifications.onClicked.addListener(name => {
   if (/^[^/\s]+\/[^/\s]+$/.test(name)) {
     // is a repo
-    browser.tabs.create({ url: 'https://github.com/' + name })
+    browser.tabs.create({ url: 'https://github.com/' + name + '/releases' })
     browser.notifications.clear(name)
     clearBadge()
   }
