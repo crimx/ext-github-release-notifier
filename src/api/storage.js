@@ -7,6 +7,7 @@ import browser from 'webextension-polyfill'
 import _ from 'lodash'
 import semver from 'semver'
 import { getFileIcon } from '@/popup/file-type-icons'
+import fetchDOM from './fetch-dom'
 import { addOneBadgeUnread } from './badge'
 import { getToken, checkAccessToken, removeToken } from './oauth'
 import {
@@ -21,6 +22,7 @@ import {
  * @typedef {object} ReleaseData
  * @property {string} name - repo name [owner]/[repo]
  * @property {string} watching - 'major', 'minor', 'all' or ''
+ * @property {string} method - 'api' or 'atom'
  * @property {string} etag
  * @property {string} last_modified, RFC 2822 string
  * @property {string} avatar_url - author avatar
@@ -190,6 +192,8 @@ export function replaceRepo ({name, watching}) {
         return existRepo
       }
       return fetchReleaseData({name, watching})
+        .then(releaseData => releaseData.tag_name ? releaseData : Promise.reject(new Error()))
+        .catch(() => fetchReleaseData({name, watching, method: 'atom'}))
     })
     .then(saveRepo)
     // Trigger popup page update
@@ -306,11 +310,22 @@ export function getScheduleInfo () {
 }
 
 /**
- * Fetch release info of a repo from Github
+ * Fetch release info of a repo from Github (via api or atom)
  * @param {module:api/storage~ReleaseData} releaseData - only name is mandatory
  * @returns {Promise<module:api/storage~ReleaseData>} A Promise fulfilled with ReleaseData object if succeeded.
  */
 function fetchReleaseData (releaseData) {
+  return releaseData.method === 'atom'
+    ? fetchReleaseDataViaAtom(releaseData)
+    : fetchReleaseDataViaApi(releaseData)
+}
+
+/**
+ * Fetch release info of a repo from Github (via api)
+ * @param {module:api/storage~ReleaseData} releaseData - only name is mandatory
+ * @returns {Promise<module:api/storage~ReleaseData>} A Promise fulfilled with ReleaseData object if succeeded.
+ */
+function fetchReleaseDataViaApi (releaseData) {
   const headers = new Headers({
     'Accept': 'application/vnd.github.v3+json'
   })
@@ -345,6 +360,7 @@ function fetchReleaseData (releaseData) {
         return {
           name: releaseData.name,
           watching: releaseData.watching,
+          method: 'api',
           etag: response.headers.get('etag') || '',
           last_modified: response.headers.get('last-modified') || '',
           avatar_url: releaseData.avatar_url || 'data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==', // gray
@@ -364,6 +380,7 @@ function fetchReleaseData (releaseData) {
         .then(json => ({
           name: releaseData.name,
           watching: releaseData.watching,
+          method: 'api',
           etag: response.headers.get('etag') || '',
           last_modified: response.headers.get('last-modified') || '',
           avatar_url: json.author.avatar_url,
@@ -380,6 +397,79 @@ function fetchReleaseData (releaseData) {
             icon_name: getFileIcon(asset.name),
           }))
         }))
+    })
+    .catch(() => Promise.reject(new Error(`Failed to check repo: ${releaseData.name}`)))
+}
+
+/**
+ * Fetch release info of a repo from Github (via atom)
+ * @param {module:api/storage~ReleaseData} releaseData - only name is mandatory
+ * @returns {Promise<module:api/storage~ReleaseData>} A Promise fulfilled with ReleaseData object if succeeded.
+ */
+function fetchReleaseDataViaAtom (releaseData) {
+  return fetchDOM(`https://github.com/${releaseData.name}/releases.atom`)
+    .then(xhr => {
+      const doc = xhr.responseXML
+      if (doc && doc.querySelector('entry')) {
+        if (process.env.DEBUG_MODE) {
+          console.log(`Server response atom for ${releaseData.name}`)
+        }
+        const release = doc.querySelector('entry')
+
+        let avatarUrl = releaseData.avatar_url
+        try {
+          avatarUrl = release.querySelector('thumbnail').getAttribute('url')
+        } catch (e) {}
+
+        let publishedAt = releaseData.published_at || 0
+        try {
+          publishedAt = new Date(release.querySelector('updated').textContent).valueOf()
+        } catch (e) {}
+
+        let tagName = releaseData.tag_name || ''
+        try {
+          tagName = (release.querySelector('id').textContent.match(/\/([^/]+$)/) || [null, tagName])[1]
+        } catch (e) {}
+
+        return {
+          name: releaseData.name,
+          watching: releaseData.watching,
+          method: 'atom',
+          etag: '',
+          last_modified: '',
+          avatar_url: avatarUrl,
+          author_url: releaseData.author_url || 'https://github.com/' + releaseData.name.split('/')[0],
+          published_at: publishedAt,
+          html_url: releaseData.html_url || 'https://github.com/' + releaseData.name,
+          tag_name: tagName,
+          zipball_url: tagName ? `https://github.com/${releaseData.name}/archive/${tagName}.zip` : '',
+          tarball_url: tagName ? `https://github.com/${releaseData.name}/archive/${tagName}.tar.gz` : '',
+          assets: [],
+        }
+      }
+
+      if ((doc && !doc.querySelector('entry')) || xhr.status === 404) {
+        // Maybe the author didn't publish a release yet
+        // Or releases has been emptied
+        // Or repo has been deleted
+        return {
+          name: releaseData.name,
+          watching: releaseData.watching,
+          method: 'atom',
+          etag: '',
+          last_modified: '',
+          avatar_url: releaseData.avatar_url || 'data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==', // gray
+          author_url: releaseData.author_url || 'https://github.com/' + releaseData.name.split('/')[0],
+          html_url: releaseData.html_url || 'https://github.com/' + releaseData.name,
+          published_at: 0, // for sorting
+          tag_name: '',
+          zipball_url: '',
+          tarball_url: '',
+          assets: [],
+        }
+      }
+
+      return Promise.reject(new Error())
     })
     .catch(() => Promise.reject(new Error(`Failed to check repo: ${releaseData.name}`)))
 }
