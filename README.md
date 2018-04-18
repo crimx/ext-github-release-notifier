@@ -7,7 +7,7 @@ Unofficial "polyfill" for watching Github releases. It was based on [this](https
 
 It checks Github releases every 15 minutes and notifies releases by browser notification.
 
-Fast & light-weight: It is loaded and run only when needed. And instead of subscribing atom feeds, it uses Github api and takes advantage of 403 cache.
+Fast & light-weight: It is loaded and run only when needed. It uses Github api and takes advantage of 403 cache. You can also switch to atom feeds for unsupported repos.
 
 ![screenshot](https://github.com/crimx/ext-github-release-notifier/wiki/images/screen2.png)
 
