@@ -14,6 +14,10 @@
         </a>
       </h3>
       <!-- version tag name & publish date -->
+      <select class="form-select select-sm" v-model="repo.method" @change="saveRepo(repo)" title="Github API is faster, but may not works on some repos.">
+        <option>api</option>
+        <option>atom</option>
+      </select>
       <a
         :href="repo.html_url" target="_blank" rel="noopener"
         :class="repo.isFresh && !repo.isFilterOut ? 'text-orange' : 'text-gray'"
@@ -53,12 +57,14 @@
 
 <script>
 import openURL from '@/api/open-url'
+import { saveRepo } from '@/api/storage'
 
 export default {
   name: 'repo-list',
   props: ['repos'],
   methods: {
-    openURL: openURL
+    openURL: openURL,
+    saveRepo: saveRepo,
   },
 }
 </script>

@@ -116,9 +116,24 @@ function removeRepoNames (name) {
  * @param {module:api/storage~ReleaseData} releaseData
  * @returns {Promise} A Promise fulfilled with the same releaseData if succeeded.
  */
-function saveRepo (releaseData) {
-  return browser.storage.local.set({[releaseData.name]: releaseData})
-    .then(_.constant(releaseData))
+export function saveRepo (releaseData) {
+  const validReleaseData = _.pick(releaseData, [
+    'name',
+    'watching',
+    'method',
+    'etag',
+    'last_modified',
+    'avatar_url',
+    'author_url',
+    'published_at',
+    'html_url',
+    'tag_name',
+    'zipball_url',
+    'tarball_url',
+    'assets',
+  ])
+  return browser.storage.local.set({[releaseData.name]: validReleaseData})
+    .then(_.constant(validReleaseData))
 }
 
 /**
