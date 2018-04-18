@@ -95,7 +95,7 @@ export function getRepoNames () {
         console.log('repos: ' + Array.from(new Set(syncRepos.concat(localRepos))))
       }
       const repos = Array.from(new Set(syncRepos.concat(localRepos)))
-      if (repos.length !== syncRepos.length) {
+      if (repos.length !== syncRepos.length && repos.length > 0) {
         saveRepoNames(repos)
       }
       return repos
@@ -103,11 +103,16 @@ export function getRepoNames () {
 }
 
 /**
- * Remove a repo from name list
- * @returns {Promise<string>} A Promise fulfilled with no argument if succeeded.
+ * Remove a repo or an array of repos from name list
+ * @param {string|string[]} name
+ * @returns {Promise<undefined>} A Promise fulfilled with no argument if succeeded.
  */
-function removeRepoNames (name) {
-  return saveRepoNames([])
+export function removeRepoName (name) {
+  const names = _.isArray(name) ? name : [name]
+  return browser.storage.sync.get('repos')
+    .then(({repos}) => _.without(repos || [], ...names))
+    .then(saveRepoNames)
+    .then(_.noop)
 }
 
 /**
@@ -152,13 +157,15 @@ export function getRepo (name) {
 }
 
 /**
- * Delete a repo's data
+ * Delete the data of a repo or an array of repos
  * @fires browser.storage.onChanged
- * @param {string} name - repo name
+ * @param {string|string[]} name - repo name
  * @returns {Promise} A Promise fulfilled with the no argument if succeeded.
  */
 function removeRepo (name) {
-  return browser.storage.local.remove(name)
+  const names = _.isArray(name) ? name : [name]
+  return browser.storage.local.remove(names)
+    .then(() => removeRepoName(names))
 }
 
 /**
@@ -184,8 +191,7 @@ export function getAllRepos () {
  */
 export function removeAllRepos () {
   return getRepoNames()
-    .then(names => Promise.all(names.map(removeRepo)))
-    .then(removeRepoNames)
+    .then(removeRepo)
 }
 
 /**
@@ -195,8 +201,7 @@ export function removeAllRepos () {
  */
 export function replaceRepo ({name, watching}) {
   if (!watching) {
-    return Promise.all([removeRepo(name), removeRepoNames(name)])
-      .then(_.noop)
+    return removeRepo(name).then(_.noop)
   }
 
   return getRepoNames()
@@ -519,7 +524,6 @@ function fetchAllReleaseData () {
                   fireCheckReposProgress({success, failed})
                 } else {
                   removeRepo(newData.name)
-                  removeRepoNames(newData.name)
                   if (process.env.DEBUG_MODE) {
                     console.warn(`${newData.name} is ignoring but still in the list, removed.`)
                   }
