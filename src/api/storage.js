@@ -83,23 +83,8 @@ function saveRepoNames (names) {
  * @returns {Promise<string[]>} A Promise fulfilled with array of repo names ([owner]/[repo]) if succeeded.
  */
 export function getRepoNames () {
-  const getLocalRepos = browser.storage.local.get(null)
-    .then(result => Object.keys(result).filter(name => /^[^/]+\/[^/]+$/.test(name)))
-  const getSyncRepos = browser.storage.sync.get('repos')
+  return browser.storage.sync.get('repos')
     .then(({repos}) => repos || [])
-
-  return Promise.all([getSyncRepos, getLocalRepos])
-    .then(([syncRepos, localRepos]) => {
-      if (process.env.DEBUG_MODE) {
-        console.log(`reconcile storage:\nsync(${syncRepos})\nlocal(${localRepos})`)
-        console.log('repos: ' + Array.from(new Set(syncRepos.concat(localRepos))))
-      }
-      const repos = Array.from(new Set(syncRepos.concat(localRepos)))
-      if (repos.length !== syncRepos.length && repos.length > 0) {
-        saveRepoNames(repos)
-      }
-      return repos
-    })
 }
 
 /**
@@ -137,7 +122,7 @@ export function saveRepo (releaseData) {
     'tarball_url',
     'assets',
   ])
-  return browser.storage.local.set({[releaseData.name]: validReleaseData})
+  return browser.storage.sync.set({[releaseData.name]: validReleaseData})
     .then(_.constant(validReleaseData))
 }
 
@@ -147,7 +132,7 @@ export function saveRepo (releaseData) {
  * @returns {Promise<module:api/storage~ReleaseData|null>} A Promise fulfilled with ReleaseData object or null.
  */
 export function getRepo (name) {
-  return browser.storage.local.get(name)
+  return browser.storage.sync.get(name)
     .then(response => {
       if (response[name]) {
         return response[name]
@@ -164,7 +149,7 @@ export function getRepo (name) {
  */
 function removeRepo (name) {
   const names = _.isArray(name) ? name : [name]
-  return browser.storage.local.remove(names)
+  return browser.storage.sync.remove(names)
     .then(() => removeRepoName(names))
 }
 
@@ -588,7 +573,7 @@ export function addRateLimitRemainingListener (callback) {
     }
   }
   browser.storage.onChanged.addListener((changes, areaName) => {
-    if (areaName === 'local' && changes.rateLimitRemaining) {
+    if (areaName === 'sync' && changes.rateLimitRemaining) {
       callback(changes.rateLimitRemaining.newValue)
     }
   })
@@ -604,13 +589,13 @@ export function saveRateLimitRemaining (num) {
     console.assert(_.isNumber(num))
     console.log('rate limit remaining: ' + num)
   }
-  return browser.storage.local.set({rateLimitRemaining: num})
+  return browser.storage.sync.set({rateLimitRemaining: num})
 }
 
 /**
  * @returns {Promise<number>} A promise with the rate limit remaining count
  */
 export function getRateLimitRemaining () {
-  return browser.storage.local.get('rateLimitRemaining')
+  return browser.storage.sync.get('rateLimitRemaining')
     .then(({rateLimitRemaining}) => rateLimitRemaining >= 0 ? rateLimitRemaining : 60)
 }

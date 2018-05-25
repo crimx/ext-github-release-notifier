@@ -19,18 +19,18 @@ export function authorize () {
 }
 
 /**
- * Save token to local storage
+ * Save token to sync storage
  * @return {Promise<string>} A Promise fulfilled with the access token if succeeded.
  */
 export function saveToken (accessToken) {
   if (process.env.DEBUG_MODE) {
     console.assert(typeof accessToken === 'string')
   }
-  return browser.storage.local.set({accessToken})
+  return browser.storage.sync.set({accessToken})
 }
 
 /**
- * Remove token from local storage
+ * Remove token from sync storage
  * @return {Promise} A Promise fulfilled with no argument if succeeded.
  */
 export function removeToken () {
@@ -38,11 +38,11 @@ export function removeToken () {
 }
 
 /**
- * Get token from local storage
+ * Get token from sync storage
  * @return {Promise<string>} A Promise fulfilled with the access token if succeeded.
  */
 export function getToken () {
-  return browser.storage.local.get('accessToken')
+  return browser.storage.sync.get('accessToken')
     .then(({accessToken}) => accessToken)
 }
 
@@ -141,7 +141,7 @@ export function checkAccessToken () {
  */
 export function addTokenListener (callback) {
   browser.storage.onChanged.addListener((changes, areaName) => {
-    if (areaName === 'local' && changes.accessToken) {
+    if (areaName === 'sync' && changes.accessToken) {
       callback(changes.accessToken.newValue)
     }
   })

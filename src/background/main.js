@@ -1,4 +1,5 @@
 import browser from 'webextension-polyfill'
+import pick from 'lodash/pick'
 
 import { clearBadge } from '@/api/badge'
 
@@ -15,9 +16,10 @@ import {
   checkRepos,
   getScheduleInfo,
   addRateLimitRemainingListener,
+  saveRateLimitRemaining,
 } from '@/api/storage'
 
-import { authorize } from '@/api/oauth'
+import { authorize, saveToken } from '@/api/oauth'
 
 if (process.env.DEBUG_MODE) {
   console.log(`Debug mode enabled`)
@@ -130,7 +132,7 @@ browser.alarms.onAlarm.addListener(() => {
   checkRepos().then(setAlarm).catch(setAlarm)
 })
 
-chrome.runtime.onInstalled.addListener(setAlarm)
+chrome.runtime.onInstalled.addListener(onInstalled)
 browser.runtime.onStartup.addListener(setAlarm)
 
 function setAlarm () {
@@ -146,4 +148,28 @@ function setAlarm () {
       }
       return browser.alarms.create({delayInMinutes: period})
     })
+}
+
+function onInstalled () {
+  // fix legacy bug
+  // move everything to sync area
+  browser.storage.local.get(null)
+    .then(result => {
+      const localRepoNames = Object.keys(result).filter(name => /^[^/]+\/[^/]+$/.test(name))
+
+      if (localRepoNames.length > 0) {
+        browser.storage.sync.set(pick(result, localRepoNames))
+      }
+
+      if (result.accessToken) {
+        saveToken(result.accessToken)
+      }
+
+      if (typeof result.rateLimitRemaining === 'number') {
+        saveRateLimitRemaining(result.rateLimitRemaining)
+      }
+
+      return browser.storage.local.remove(localRepoNames.concat(['accessToken', 'rateLimitRemaining']))
+    })
+    .then(setAlarm)
 }
