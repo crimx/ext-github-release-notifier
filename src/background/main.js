@@ -169,7 +169,13 @@ function onInstalled () {
         saveRateLimitRemaining(result.rateLimitRemaining)
       }
 
-      return browser.storage.local.remove(localRepoNames.concat(['accessToken', 'rateLimitRemaining']))
+      return Promise.all([
+        browser.storage.local.remove(localRepoNames.concat(['accessToken', 'rateLimitRemaining'])),
+        browser.storage.sync.get('repos')
+          .then(({ repos = [] }) => browser.storage.sync.set({
+            repos: [...new Set(repos.concat(localRepoNames))]
+          })),
+      ])
     })
     .then(setAlarm)
 }

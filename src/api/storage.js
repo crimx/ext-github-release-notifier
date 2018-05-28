@@ -73,9 +73,9 @@ function saveRepoNames (names) {
   }
   if (_.isString(names)) {
     return getRepoNames()
-      .then(repos => browser.storage.sync.set({repos: repos.concat([names])}))
+      .then(repos => browser.storage.sync.set({repos: [...new Set(repos.concat([names]))]}))
   }
-  return browser.storage.sync.set({repos: names})
+  return browser.storage.sync.set({repos: [...new Set(names)]})
 }
 
 /**
