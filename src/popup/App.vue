@@ -251,7 +251,7 @@ body {
 
 .header-title {
   margin-bottom: 4px;
-  font-size: 21px;
+  font-size: 19px;
   line-height: 1;
 }
 
