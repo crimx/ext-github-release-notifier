@@ -44,6 +44,12 @@ window.chrome = {
   },
   runtime: {
     onMessage: {},
+    onInstalled: {
+      addListener () {},
+    },
+    onStartup: {
+      addListener () {},
+    },
     getURL (name) { return '/' + name },
   },
   storage: {

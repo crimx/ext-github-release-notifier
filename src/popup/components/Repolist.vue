@@ -28,6 +28,7 @@
         ~
         {{ repo.published_from_now }}
       </a>
+      <button type="button" class="btn-remove-repo" @click="removeRepo(repo.name)">remove</button>
     </div> <!-- repo info -->
     <!-- assets -->
     <div v-once class="assets">
@@ -58,6 +59,7 @@
 <script>
 import openURL from '@/api/open-url'
 import { saveRepo } from '@/api/storage'
+import { requestReplaceRepo } from '@/api/message'
 
 export default {
   name: 'repo-list',
@@ -65,6 +67,11 @@ export default {
   methods: {
     openURL: openURL,
     saveRepo: saveRepo,
+    removeRepo (name) {
+      if (window.confirm(`Remove repo ${name}?`)) {
+        requestReplaceRepo({name, watching: ''})
+      }
+    },
   },
 }
 </script>
@@ -89,5 +96,21 @@ export default {
 
 .repo-list-move {
   transition: transform 0.9s;
+}
+
+.btn-remove-repo {
+  margin: 0;
+  padding: 0;
+  border: none;
+  color: #586069;
+  background: transparent;
+  outline: none;
+
+  &:hover,
+  &:focus,
+  &:active {
+    color: #e36209;
+    text-decoration: underline;
+  }
 }
 </style>
