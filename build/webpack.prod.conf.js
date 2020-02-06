@@ -13,6 +13,7 @@ const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
 const GenerateJsonPlugin = require('generate-json-webpack-plugin')
 const manifest = require('../src/manifest/base.manifest.json')
 const version = require('../package.json').version
+const Dotenv = require('dotenv-webpack')
 
 const env = require('../config/prod.env')
 
@@ -39,6 +40,7 @@ const webpackConfig = merge(baseWebpackConfig, {
     chunkFilename: utils.assetsPath('[id].js')
   },
   plugins: [
+    new Dotenv(),
     // http://vuejs.github.io/vue-loader/en/workflow/production.html
     new webpack.DefinePlugin({
       'process.env': env

@@ -21,10 +21,12 @@ Clone repo, `cd` in and run `yarn install`.
 
 Both Chrome & Firefox outputs are in `dist/` folder.
 
-If you need to test oauth, edit `src/api/oauth-data.js`, add custom oauth client ids and secrets.
+If you need to test oauth, add a `.env` file at project root with ids and secrets:
 
-You can also untrack it locally.
+```
+CHROME_ID=
+CHROME_SECRET=
 
-```bash
-git update-index --assume-unchanged src/api/oauth-data.js
+FIREFOX_ID=
+FIREFOX_SECRET=
 ```
