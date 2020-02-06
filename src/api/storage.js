@@ -343,8 +343,15 @@ function fetchReleaseDataViaApi (releaseData) {
 
   return getToken()
     .then(token => {
-      const params = token ? `?access_token=${token}` : ''
-      return fetch(`https://api.github.com/repos/${releaseData.name}/releases/latest${params}`, {headers})
+      return fetch(
+        `https://api.github.com/repos/${releaseData.name}/releases/latest`,
+        {
+          headers: {
+            ...headers,
+            ...(token ? { Authorization: `token ${token}` } : {})
+          }
+        }
+      )
     })
     .then(response => {
       if (process.env.DEBUG_MODE) {
